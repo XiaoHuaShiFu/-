@@ -51,6 +51,8 @@ char b1[30] = "请输入账号:";
 char b2[30] = "请输入昵称:";
 char b3[30] = "请输入密码:";
 char b4[30] = "请再次输入密码:";
+char b5[30] = "请输入新密码:";
+char b6[30] = "请再次输入新密码:";
 /****************************全局变量区*******************************/
 
 
@@ -80,6 +82,9 @@ void Assign_Int(int &variable,int Number);
 /*字符串型赋值*/
 void Assign_Char(char *variable,char Str[]);
 
+/*清空屏幕*/
+void ClearScreen();
+
 /*返回拍卖品数量*/
 int AuctionItemQuantity(auctionItems Items);
 
@@ -87,7 +92,7 @@ int AuctionItemQuantity(auctionItems Items);
 void AddAuctionItemToFile();
 
 /*初始化拍卖品链表*/
-void CreateList(auctionItems &Items);
+void CreateAuctionList(auctionItems &Items);
 
 /*打印拍卖品*/
 int PrintAuctionItem(auctionItem Item);
@@ -137,11 +142,26 @@ int TurnoverNumberInAuctionHouse(auctionItems Items,char State[]);
 /*向文件添加用户信息*/
 void AddUserToFile(User &UserItem);
 
+/*删除用户信息*/
+int DeleteUser(Users UserItems,char *UserAccount,User &UserItem);
+
+/*初始化用户链表*/
+void CreateUserList(Users &UserItems);
+
+/*通过Account寻找用户，找不到返回0，找到返回1*/
+int SearchByAccount(Users UserItems,char Account[],User &UserItem);
+
+/*用户登录，成功返回1，密码错误返回-1，账号不存在返回0*/
+int UserLog(Users UserItems,User &UserItem);
+
 /*打印用户信息*/
 void PrintUser(User UserItem);
 
 /*打印用户信息列表*/
 int PrintUsers(Users UserItems);
+
+/*修改密码函数*/
+int ModifyUserPassword(Users &UserItems,char *Account);
 /****************************函数声明区*******************************/
 
 
@@ -185,19 +205,40 @@ void Input_Str(char *Char,char prompt[]){
 }
 
 /*输出提示并输入密码,成功录入返回1，失败返回0*/
+//如何删除backspace删除屏幕显示的一个星星符还未解决
 int Input_Password(char *Password,char prompt1[],char prompt2[]){
     int idx = 0;
     char c,FirstInput[20],SecondInput[20];
     cout << prompt1;
     while((c = getch()) != '\r'){
+        if(c == '\b'){
+             if(idx != 0){
+                cout << '\b';
+                idx--;
+                continue;
+             }
+             else{
+                continue;
+             }
+        }
         FirstInput[idx++] = c;
-        putchar('*');
+        cout << '*';
     }
     cout << endl << prompt2;
     idx = 0;
     while((c = getch()) != '\r'){
-        FirstInput[idx++] = c;
-        putchar('*');
+        if(c == '\b'){
+             if(idx != 0){
+                cout << '\b';
+                idx--;
+                continue;
+             }
+             else{
+                continue;
+             }
+        }
+        SecondInput[idx++] = c;
+        cout << '*';
     }
     cout << endl;
     if(Equal_Str(FirstInput,SecondInput)){
@@ -213,10 +254,14 @@ void Assign_Int(int &Int,int Number){
 }
 
 /*字符串型赋值*/
-void Assign_Char(char *Char,char Str[]){
+void Assign_Char(char *Char,char *Str){
     strcpy(Char,Str);
 }
 
+/*清空屏幕*/
+void ClearScreen(){
+    system("cls");
+}
 /****************************通用函数区*******************************/
 
 
@@ -250,7 +295,7 @@ void AddAuctionItemToFile(auctionItem &Item){
 }
 
 /*初始化拍卖品链表*/
-void CreateList(auctionItems &Items){
+void CreateAuctionList(auctionItems &Items){
     FILE *fp;
     fp = fopen("auctionItems_DataBase.txt","rb");
     auctionItems Pointer,PointerBridge ;//head指针为链表的头结点，是找到链表的唯一依据，如果head指针丢失，那么整个链表就找不到了;p指针总是指向新申请的结点;q指针总是指向尾节点
@@ -352,7 +397,7 @@ void DeleteItemAndPrint(auctionItems &Items,int Id,auctionItem &Item){
 //        return 0;
     }
     else{
-        CreateList(Items);
+        CreateAuctionList(Items);
         cout << "-----------删除后文件列表-----------" << endl;
         PrintAuctionItems(Items);
         cout << "-----------删除的物品信息-----------" << endl;
@@ -368,7 +413,7 @@ int ModifyItem(auctionItems &Items,int Id,auctionItem &PreItem,auctionItem &Post
         return 0;
     }
     AddAuctionItemToFile(PostItem);//输入修改后的信息
-    CreateList(Items);//重新初始化链表
+    CreateAuctionList(Items);//重新初始化链表
     return 1;
 }
 
@@ -509,6 +554,73 @@ void AddUserToFile(User &UserItem){
     fclose(fp);
 }
 
+/*删除用户信息*/
+//未实现在这个函数里重新初始化列表
+int DeleteUser(Users UserItems,char *UserAccount,User &UserItem){
+    int Flag = 0;
+    FILE *Prototype,*Temporary;
+    Prototype = fopen("Users_DataBase.txt","rb");
+    Temporary = fopen("Users_DataBase_Temporary.txt","a+");
+    if(Prototype == NULL || Temporary == NULL){
+        fclose(Prototype);
+        fclose(Temporary);
+        return 0; //排除打开文件失败
+    }
+    if(UserItems->next == NULL){
+        fclose(Prototype);
+        fclose(Temporary);
+        return -2;//排除原链表为空
+    }
+    while(UserItems->next != NULL){
+        UserItems = UserItems->next;
+        if(!Equal_Str(UserItems->Account,UserAccount)) fwrite(&*UserItems,sizeof(User),1,Temporary);//把不是要删除的节点写入临时文件
+        else{
+            UserItem = *UserItems;//返回要删除节点的信息
+            Flag = 1;
+        }
+    }
+    fclose(Prototype);
+    fclose(Temporary);
+    remove("Users_DataBase.txt");//删除原文件
+    rename("Users_DataBase_Temporary.txt","Users_DataBase.txt");//把临时文件名改为原文件名
+    if(Flag == 0) return -1; //如果没有找到所要删除的编号 则返回1
+    return 1;//找到则返回1
+}
+
+/*初始化用户链表*/
+void CreateUserList(Users &UserItems){
+    FILE *fp;
+    fp = fopen("Users_DataBase.txt","rb");
+    Users Pointer,PointerBridge ;//head指针为链表的头结点，是找到链表的唯一依据，如果head指针丢失，那么整个链表就找不到了;p指针总是指向新申请的结点;q指针总是指向尾节点
+    User temp;//定义结构体别名
+    UserItems = (Users)malloc(sizeof(User));
+    UserItems->next = NULL;
+    Pointer = (Users)malloc(sizeof(User));  // p指向新开辟的节点内存
+    Pointer = UserItems;    //开辟头结点内存      头结点中没有学生成绩信息
+    while(fread(&temp,sizeof(User),1,fp)!=0){//从文件中读结构体块
+        PointerBridge = (Users)malloc(sizeof(User)); // p指向新开辟的节点内存
+        Assign_Char(PointerBridge -> Account,temp.Account);
+        Assign_Char(PointerBridge -> Nickname,temp.Nickname);
+        Assign_Char(PointerBridge -> Password,temp.Password);
+        PointerBridge->next = Pointer -> next;
+        Pointer->next = PointerBridge;
+        Pointer = PointerBridge;
+    }
+    fclose(fp);
+}
+
+/*通过Account寻找用户，找不到返回0，找到返回1*/
+int SearchByAccount(Users UserItems,char Account[],User &UserItem){
+    while(UserItems -> next != NULL){
+        UserItems = UserItems -> next;
+        if(Equal_Str(UserItems->Account,Account)){
+            UserItem = *UserItems;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /*打印用户信息*/
 void PrintUser(User UserItem){
     cout << "------------------------" << endl;
@@ -527,6 +639,37 @@ int PrintUsers(Users UserItems){
     }
     return 1;
 }
+
+/*用户登录，成功返回1，密码错误返回-1，账号不存在返回0*/
+int UserLog(Users UserItems,User &UserItem){
+    char Account[20],Password[20];
+    cout << b1;
+    scanf("%s",Account);
+    cout << b3;
+    scanf("%s",Password);
+    if(SearchByAccount(UserItems,Account,UserItem)){
+        if(Equal_Str(Password,UserItem.Password)) return 1;//登录成功
+        else return -1;//密码错误
+    }
+    return 0;//账号不存在
+}
+
+/*修改密码函数*/
+int ModifyUserPassword(Users &UserItems,char *Account){
+    FILE *fp;
+    fp = fopen("Users_DataBase.txt","a+");
+    User UserItem;
+    if(DeleteUser(UserItems,Account,UserItem) != 1){
+        cout << "删除失败"<< endl;
+        return 0;
+    }
+    Input_Password(UserItem.Password,b5,b6);
+    fwrite(&UserItem,sizeof(User),1,fp);
+    CreateUserList(UserItems);//重新初始化链表
+    fclose(fp);
+    return 1;
+}
+
 /****************************用户链表操作区*********************************/
 
 
@@ -537,6 +680,8 @@ int main()
     auctionItem Item,PreItem,PostItem;
     User UserItem;
     Users UserItems;
+    CreateUserList(UserItems);
+    CreateAuctionList(Items);
 
 //    AddAuctionItemToFile(Item);
 //    AddAuctionItemToFile(Item);
@@ -546,8 +691,23 @@ int main()
 //    AddAuctionItemToFile(Item);
 //    AddUserToFile(UserItem);
 //    AddUserToFile(UserItem);
+//    AddUserToFile(UserItem);
 
-//    CreateList(Items);
+    PrintUsers(UserItems);
+    cout << "--------------------------" << endl;
+//    ModifyUserPassword(UserItems,"XiaoHong");
+    DeleteUser(UserItems,"BCd",UserItem);
+    CreateUserList(UserItems);
+    PrintUsers(UserItems);
+//    if(UserLog(UserItems,UserItem) == 1){
+//        PrintUser(UserItem);
+//    }
+//    else{
+//        cout << "登录失败" << endl;
+//    }
+
+
+
 //    cout << "--------------当前列表信息-------------" << endl;
 //    if(!PrintAuctionItems(Items)){
 //        cout << "当前无拍卖中的物品" << endl;
