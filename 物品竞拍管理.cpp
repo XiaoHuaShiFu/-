@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <sstream>
+#include <conio.h>
 #include <windows.h> //Sleep()函数
 using namespace std;
 /****************************头文件区*********************************/
@@ -13,8 +14,7 @@ using namespace std;
 #define ERROR 0
 #define OK 1
 #define ElemType int
-typedef struct auctionItem
-{
+typedef struct auctionItem{
     int Id;//编号
     char Category[20];//类别
     char Name[30];//名称
@@ -27,11 +27,30 @@ typedef struct auctionItem
     char Owner[30];//物主
     struct auctionItem *next;
 } auctionItem,*auctionItems;
+typedef struct User{
+    char Account[30];
+    char Password[20];
+    char Nickname[20];
+    struct User *next;
+}User,*Users;
 /****************************宏定义区*********************************/
 
 
 /****************************全局变量区*******************************/
 char Empty[6] = "Empty";
+char a1[30] = "请输入物品编号:";
+char a2[30] = "请输入物品类别:";
+char a3[30] = "请输入物品名称:";
+char a4[30] = "请输入物品价格:";
+char a5[30] = "请输入物品估价:";
+char a6[30] = "请输入物品新旧:";
+char a7[30] = "请输入物品描述:";
+char a8[30] = "请输入物品状态:";
+char a9[30] = "请输入物品所有者:";
+char b1[30] = "请输入账号:";
+char b2[30] = "请输入昵称:";
+char b3[30] = "请输入密码:";
+char b4[30] = "请再次输入密码:";
 /****************************全局变量区*******************************/
 
 
@@ -51,6 +70,10 @@ void Input_Int(int &variable,char prompt[]);
 /*输出提示并输入字符串型数据*/
 void Input_Str(char *variable,char prompt[]);
 
+
+/*输出提示并输入密码,成功录入返回1，失败返回0*/
+int Input_Password(char *Password,char prompt1[],char prompt2[]);
+
 /*整形赋值*/
 void Assign_Int(int &variable,int Number);
 
@@ -61,7 +84,7 @@ void Assign_Char(char *variable,char Str[]);
 int AuctionItemQuantity(auctionItems Items);
 
 /*把物品信息输入文件中*/
-void InputAuctionItemToFile();
+void AddAuctionItemToFile();
 
 /*初始化拍卖品链表*/
 void CreateList(auctionItems &Items);
@@ -110,6 +133,15 @@ int TurnoverInAuctionHouse(auctionItems Items);
 
 /*返回当前拍卖行中拍卖品的总成交数or正在拍卖数*/
 int TurnoverNumberInAuctionHouse(auctionItems Items,char State[]);
+
+/*向文件添加用户信息*/
+void AddUserToFile(User &UserItem);
+
+/*打印用户信息*/
+void PrintUser(User UserItem);
+
+/*打印用户信息列表*/
+int PrintUsers(Users UserItems);
 /****************************函数声明区*******************************/
 
 
@@ -131,44 +163,64 @@ void Delay(int seconds){
 }
 
 /*输出提示并输入整形数据*/
-void Input_Int(int &variable,char prompt[]){
+void Input_Int(int &Int,char prompt[]){
     if(Equal_Str(prompt,Empty)){
-        scanf("%d",&variable);
+        scanf("%d",&Int);
     }
     else{
-        printf("%s",prompt);
-        scanf("%d",&variable);
+        cout << prompt;
+        scanf("%d",&Int);
     }
 }
 
 /*输出提示并输入字符串型数据*/
-void Input_Str(char *variable,char prompt[]){
+void Input_Str(char *Char,char prompt[]){
     if(Equal_Str(prompt,Empty)){
-        scanf("%s",variable);
+        scanf("%s",Char);
     }
     else{
-        printf("%s",prompt);
-        scanf("%s",variable);
+        cout << prompt;
+        scanf("%s",Char);
     }
+}
+
+/*输出提示并输入密码,成功录入返回1，失败返回0*/
+int Input_Password(char *Password,char prompt1[],char prompt2[]){
+    int idx = 0;
+    char c,FirstInput[20],SecondInput[20];
+    cout << prompt1;
+    while((c = getch()) != '\r'){
+        FirstInput[idx++] = c;
+        putchar('*');
+    }
+    cout << endl << prompt2;
+    idx = 0;
+    while((c = getch()) != '\r'){
+        FirstInput[idx++] = c;
+        putchar('*');
+    }
+    cout << endl;
+    if(Equal_Str(FirstInput,SecondInput)){
+        Assign_Char(Password,FirstInput);
+        return 1;
+    }
+    else return 0;
 }
 
 /*整形赋值*/
-void Assign_Int(int &variable,int Number){
-    variable = Number;
+void Assign_Int(int &Int,int Number){
+    Int = Number;
 }
 
 /*字符串型赋值*/
-void Assign_Char(char *variable,char Str[]){
-    strcpy(variable,Str);
+void Assign_Char(char *Char,char Str[]){
+    strcpy(Char,Str);
 }
 
-/*打印操作提示*/
-void OperationPrompt(){
-}
 /****************************通用函数区*******************************/
 
 
-/****************************链表操作区*******************************/
+/****************************拍卖品链表操作区*******************************/
 
 /*返回拍卖品数量*/
 int AuctionItemQuantity(auctionItems Items){
@@ -181,18 +233,9 @@ int AuctionItemQuantity(auctionItems Items){
 }
 
 /*把物品信息输入文件中*/
-void InputAuctionItemToFile(auctionItem &Item){
-    char a1[30] = "请输入物品编号:";
-    char a2[30] = "请输入物品类别:";
-    char a3[30] = "请输入物品名称:";
-    char a4[30] = "请输入物品价格:";
-    char a5[30] = "请输入物品估价:";
-    char a6[30] = "请输入物品新旧:";
-    char a7[30] = "请输入物品描述:";
-    char a8[30] = "请输入物品状态:";
-    char a9[30] = "请输入物品所有者:";
+void AddAuctionItemToFile(auctionItem &Item){
     FILE *fp;
-    fp=fopen("auctionItems_dataBase.txt","a+");
+    fp=fopen("auctionItems_DataBase.txt","a+");
     Input_Int(Item.Id,a1);
     Input_Str(Item.Category,a2);
     Input_Str(Item.Name,a3);
@@ -209,7 +252,7 @@ void InputAuctionItemToFile(auctionItem &Item){
 /*初始化拍卖品链表*/
 void CreateList(auctionItems &Items){
     FILE *fp;
-    fp=fopen("auctionItems_dataBase.txt","rb");
+    fp = fopen("auctionItems_DataBase.txt","rb");
     auctionItems Pointer,PointerBridge ;//head指针为链表的头结点，是找到链表的唯一依据，如果head指针丢失，那么整个链表就找不到了;p指针总是指向新申请的结点;q指针总是指向尾节点
     auctionItem temp;//定义结构体别名
     Items = (auctionItems)malloc(sizeof(auctionItem));
@@ -324,7 +367,7 @@ int ModifyItem(auctionItems &Items,int Id,auctionItem &PreItem,auctionItem &Post
         cout << "----------------找不到要修改的物品-----------------" << endl;
         return 0;
     }
-    InputAuctionItemToFile(PostItem);//输入修改后的信息
+    AddAuctionItemToFile(PostItem);//输入修改后的信息
     CreateList(Items);//重新初始化链表
     return 1;
 }
@@ -451,8 +494,40 @@ int TurnoverNumberInAuctionHouse(auctionItems Items,char State[]){
 }
 
 
-/****************************链表操作区*******************************/
+/****************************拍卖品链表操作区*******************************/
 
+
+/****************************用户链表操作区*********************************/
+/*向文件添加用户信息*/
+void AddUserToFile(User &UserItem){
+    FILE *fp;
+    fp = fopen("Users_DataBase.txt","a+");
+    Input_Str(UserItem.Account,b1);
+    Input_Str(UserItem.Nickname,b2);
+    Input_Password(UserItem.Password,b3,b4);
+    fwrite(&UserItem,sizeof(User),1,fp);
+    fclose(fp);
+}
+
+/*打印用户信息*/
+void PrintUser(User UserItem){
+    cout << "------------------------" << endl;
+    cout << UserItem.Account << endl;
+    cout << UserItem.Nickname << endl;
+    cout << UserItem.Password << endl;
+    cout << "------------------------" << endl;
+}
+
+/*打印用户信息列表*/
+int PrintUsers(Users UserItems){
+    if(UserItems->next == NULL) return 0;
+    while(UserItems->next != NULL){
+        UserItems = UserItems->next;
+        PrintUser(*UserItems);
+    }
+    return 1;
+}
+/****************************用户链表操作区*********************************/
 
 
 int main()
@@ -460,36 +535,40 @@ int main()
     int Selector;
     auctionItems Items;
     auctionItem Item,PreItem,PostItem;
+    User UserItem;
+    Users UserItems;
 
-//    InputAuctionItemToFile(Item);
-//    InputAuctionItemToFile(Item);
-//    InputAuctionItemToFile(Item);
-//    InputAuctionItemToFile(Item);
-//    InputAuctionItemToFile(Item);
-//    InputAuctionItemToFile(Item);
+//    AddAuctionItemToFile(Item);
+//    AddAuctionItemToFile(Item);
+//    AddAuctionItemToFile(Item);
+//    AddAuctionItemToFile(Item);
+//    AddAuctionItemToFile(Item);
+//    AddAuctionItemToFile(Item);
+//    AddUserToFile(UserItem);
+//    AddUserToFile(UserItem);
 
-
-
-    CreateList(Items);
-    cout << "--------------当前列表信息-------------" << endl;
-    if(!PrintAuctionItems(Items)){
-        cout << "当前无拍卖中的物品" << endl;
-     }
+//    CreateList(Items);
+//    cout << "--------------当前列表信息-------------" << endl;
+//    if(!PrintAuctionItems(Items)){
+//        cout << "当前无拍卖中的物品" << endl;
+//     }
 //    DeleteItemAndPrint(Items,1,Item);
-    cout << "--------------当前拍卖品数量------------" <<endl;
-    cout << AuctionItemQuantity(Items) << endl;
+//    cout << "--------------当前拍卖品数量------------" <<endl;
+//    cout << AuctionItemQuantity(Items) << endl;
 //    ModifyItemAndPrint(Items,0,PreItem,PostItem);
-    SearchById(Items,2,Item);
-    PrintAuctionItem(Item);
-    SearchByName(Items,"吉他",Item);
-    PrintAuctionItem(Item);
-    SearchByCategory(Items,"乐器");
-    SearchByOwner(Items,"小花");
-    cout << "----------最低最高价格--------------" << endl;
-    TheHighestPriceInAuctionHouse(Items,Item);
-    PrintAuctionItem(Item);
-    TheLowestPriceInAuctionHouse(Items,Item);
-    PrintAuctionItem(Item);
-    cout << TurnoverNumberInAuctionHouse(Items,"已成交") << endl;
-    SearchByState(Items,"拍卖中");
+//    SearchById(Items,2,Item);
+//    PrintAuctionItem(Item);
+//    SearchByName(Items,"吉他",Item);
+//    PrintAuctionItem(Item);
+//    SearchByCategory(Items,"乐器");
+//    SearchByOwner(Items,"小花");
+//    cout << "----------最低最高价格--------------" << endl;
+//    TheHighestPriceInAuctionHouse(Items,Item);
+//    PrintAuctionItem(Item);
+//    TheLowestPriceInAuctionHouse(Items,Item);
+//    PrintAuctionItem(Item);
+//    cout << TurnoverNumberInAuctionHouse(Items,"已成交") << endl;
+//    SearchByState(Items,"拍卖中");
+
+
 }
