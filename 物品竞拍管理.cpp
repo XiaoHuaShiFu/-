@@ -5,7 +5,7 @@
 #include <malloc.h>
 #include <sstream>
 #include <conio.h>
-#include <windows.h> //Sleep()函数
+#include <windows.h> //Sleep()函数,字体颜色
 using namespace std;
 /****************************头文件区*********************************/
 
@@ -18,6 +18,7 @@ typedef struct auctionItem{
     long Id;//编号
     char Category[20];//类别
     char Name[30];//名称
+    char BiddingMode[5];//明拍和暗拍
     long TheHighestPrice;//最高价
     char TheHighestBidder[30];//最高出价者
     long Evaluation;//估价
@@ -49,6 +50,7 @@ char a7[30] = "请输入物品描述:";
 char a8[30] = "请输入物品状态:";
 char a9[30] = "请输入物品所有者:";
 char a10[30] = "请输入物品起拍价:";
+char a11[30] = "请输入物品拍卖模式:";
 char b1[30] = "请输入账号:";
 char b2[30] = "请输入昵称:";
 char b3[30] = "请输入密码:";
@@ -62,7 +64,7 @@ char Auctioneer[13] = "拍卖行管理员";
 /****************************全局变量区*******************************/
 
 
-/****************************函数声明区*******************************/
+/**************************通用函数声明区*****************************/
 /*比较两个字符串是否相等，相等返回1，不相等返回0*/
 int Equal_Str(char str1[],char str2[]);
 
@@ -90,12 +92,18 @@ void Assign_Char(char *Char,char Str[]);
 
 /*清空屏幕*/
 void ClearScreen();
+/**************************通用函数声明区*****************************/
 
+
+/**************************物品函数声明区*****************************/
 /*返回拍卖品数量*/
 int AuctionItemQuantity(auctionItems Items);
 
 /*把物品信息输入文件中*/
 void AddAuctionItemToFile();
+
+/*添加物品信息*/
+void AddAuctionItem(auctionItem &Item);
 
 /*初始化拍卖品链表*/
 void CreateAuctionList(auctionItems &Items);
@@ -151,8 +159,18 @@ int  StartAuction(auctionItem &Item);
 /*用户竞拍*/
 int UserBid(auctionItems &Items,auctionItem &Item,User UserItem);
 
+/**************************物品函数声明区*****************************/
+
+
+/**************************用户函数声明区*****************************/
 /*向文件添加用户信息*/
 void AddUserToFile(User &UserItem);
+
+/*添加用户信息*/
+void AddUser(User &UserItem);
+
+/*新用户注册*/
+void Register(Users UserItems,User UserItem);
 
 /*删除用户信息*/
 int DeleteUser(Users UserItems,char *UserAccount,User &UserItem);
@@ -172,6 +190,9 @@ int SearchByNickname(Users UserItems,char Nickname[],User &UserItem);
 /*用户登录，成功返回1，密码错误返回-1，账号不存在返回0*/
 int UserLog(Users UserItems,User &UserItem);
 
+/*用户登录并打印UI页面,成功返回1，失败返回0*/
+int UserLogPrint(Users UserItems,User &UserItem);
+
 /*打印用户信息*/
 void PrintUser(User UserItem);
 
@@ -180,7 +201,25 @@ int PrintUsers(Users UserItems);
 
 /*修改密码函数*/
 int ModifyUserPassword(Users &UserItems,char *Account);
-/****************************函数声明区*******************************/
+/**************************用户函数声明区*****************************/
+
+
+/*****************************UI声明区********************************/
+/*首页选项卡*/
+void InitPrintHomePage();
+
+/*首页打印*/
+void PrintHomePage(void (*Selection)());
+
+/*首页登录框*/
+void LogPrintHomePage();
+
+/*新用户注册页面*/
+void RegisterPage();
+
+/*字体、背景初始化*/
+void InitBackgroundAndFont();
+/*****************************UI声明区********************************/
 
 
 /****************************通用函数区*******************************/
@@ -301,9 +340,16 @@ int AuctionItemQuantity(auctionItems Items){
 void AddAuctionItemToFile(auctionItem &Item){
     FILE *fp;
     fp=fopen("auctionItems_DataBase.txt","a+");
+    fwrite(&Item,sizeof(auctionItem),1,fp);
+    fclose(fp);
+}
+
+/*添加物品信息*/
+void AddAuctionItem(auctionItem &Item){
     Input_Int(Item.Id,a1);
     Input_Str(Item.Category,a2);
     Input_Str(Item.Name,a3);
+    Input_Str(Item.BiddingMode,a11);
     Assign_Int(Item.TheHighestPrice,0);
     Assign_Char(Item.TheHighestBidder,Not);
     Input_Int(Item.Evaluation,a5);
@@ -312,8 +358,6 @@ void AddAuctionItemToFile(auctionItem &Item){
     Input_Str(Item.Description,a7);
     Assign_Char(Item.State,Auctioning);
     Assign_Char(Item.Owner,Auctioneer);
-    fwrite(&Item,sizeof(auctionItem),1,fp);
-    fclose(fp);
 }
 
 /*初始化拍卖品链表*/
@@ -331,6 +375,7 @@ void CreateAuctionList(auctionItems &Items){
         Assign_Int(PointerBridge -> Id,temp.Id);
         Assign_Char(PointerBridge -> Category,temp.Category);
         Assign_Char(PointerBridge -> Name,temp.Name);
+        Assign_Char(PointerBridge ->BiddingMode,temp.BiddingMode);
         Assign_Int(PointerBridge -> TheHighestPrice,temp.TheHighestPrice);
         Assign_Char(PointerBridge -> TheHighestBidder,temp.TheHighestBidder);
         Assign_Int(PointerBridge -> Evaluation,temp.Evaluation);
@@ -352,6 +397,7 @@ int PrintAuctionItem(auctionItem Item){
     cout << Item.Id << endl;
     cout << Item.Category << endl;
     cout << Item.Name << endl;
+    cout << Item.BiddingMode << endl;
     cout << Item.TheHighestPrice << endl;
     cout << Item.TheHighestBidder << endl;
     cout << Item.Evaluation << endl;
@@ -615,11 +661,70 @@ int UserBid(auctionItems &Items,auctionItem &Item,User UserItem){
 void AddUserToFile(User &UserItem){
     FILE *fp;
     fp = fopen("Users_DataBase.txt","a+");
+    fwrite(&UserItem,sizeof(User),1,fp);
+    fclose(fp);
+}
+
+/*添加用户信息*/
+void AddUser(User &UserItem){
     Input_Str(UserItem.Account,b1);
     Input_Str(UserItem.Nickname,b2);
     Input_Password(UserItem.Password,b3,b4);
-    fwrite(&UserItem,sizeof(User),1,fp);
-    fclose(fp);
+}
+
+/*新用户注册*/
+void Register(Users UserItems,User UserItem){
+    int FlagAccount = 0,FlagPassword = 6,FlagNickname = 4,idx = 0;
+    char Password[20],Account[30],Nickname[30],c;
+    do{
+        RegisterPage();
+        if(FlagAccount){
+            cout << "                     ";
+            cout << "   该账号已被注册    " << endl << endl;
+        }
+        if(FlagPassword < 6){
+            cout << "                     ";
+            cout << "密码应大于等于6个字符" << endl << endl;
+        }
+        if(FlagNickname < 4){
+            cout << "                     ";
+            cout << "昵称应大于等于4个字符" << endl << endl;
+        }
+        cout << "                     ";
+        cout << "昵称：" ;
+        scanf("%s",Nickname);
+        cout<< endl << endl  << "                     ";
+        cout << "账号：" ;
+        scanf("%s",Account);
+        cout<< endl << endl  << "                     ";
+        cout  << "密码：" ;
+        while((c = getch()) != '\r'){
+        if(c == '\b'){
+            if(idx != 0){
+                cout << '\b';
+                idx--;
+                continue;
+                }
+                else{
+                    continue;
+                }
+            }
+            Password[idx++] = c;
+            cout << '*';
+        }
+        Password[idx] = '\0';
+        cout <<  endl ;
+        FlagNickname = Len_Str(Nickname);
+        FlagAccount = SearchByAccount(UserItems,Account,UserItem);
+        FlagPassword = Len_Str(Password);
+    }while(FlagAccount || FlagPassword < 6 || FlagNickname < 4);
+    Assign_Char(UserItem.Nickname,Nickname);
+    Assign_Char(UserItem.Account,Account);
+    Assign_Char(UserItem.Password,Password);
+    AddUserToFile(UserItem);
+    cout << "                     ";
+    cout << "注册中，请等候。。。 " << endl ;
+    Delay(1000);
 }
 
 /*删除用户信息*/
@@ -727,17 +832,48 @@ int PrintUsers(Users UserItems){
 }
 
 /*用户登录，成功返回1，密码错误返回-1，账号不存在返回0*/
-int UserLog(Users UserItems,User &UserItem){
-    char Account[20],Password[20];
-    cout << b1;
-    scanf("%s",Account);
-    cout << b3;
-    scanf("%s",Password);
+int UserLog(Users UserItems,User &UserItem,char *Account,char *Password){
     if(SearchByAccount(UserItems,Account,UserItem)){
         if(Equal_Str(Password,UserItem.Password)) return 1;//登录成功
         else return -1;//密码错误
     }
     return 0;//账号不存在
+}
+
+/*用户登录并打印UI页面,成功返回1，失败返回0*/
+int UserLogPrint(Users UserItems,User &UserItem){
+    int FlagLog = 1,idx = 0;
+        char Password[20],Account[30],c;
+        do{
+            LogPrintHomePage();
+            if(FlagLog!=1){
+                cout << "                        ";
+                cout << "密码或账号错误，请重新登录" << endl ;
+            }
+            cout<< endl << endl  << "                     ";
+            cout << "账号：" ;
+            scanf("%s",Account);
+            cout<< endl << endl  << "                     ";
+            cout  << "密码：" ;
+            while((c = getch()) != '\r'){
+            if(c == '\b'){
+                if(idx != 0){
+                    cout << '\b';
+                    idx--;
+                    continue;
+                    }
+                    else{
+                        continue;
+                    }
+                }
+                Password[idx++] = c;
+                cout << '*';
+            }
+            Password[idx] = '\0';
+            cout <<  endl ;
+            FlagLog = UserLog(UserItems,UserItem,Account,Password);
+        }while(FlagLog != 1);
+        Delay(500);
 }
 
 /*修改密码函数*/
@@ -759,42 +895,110 @@ int ModifyUserPassword(Users &UserItems,char *Account){
 /****************************用户链表操作区*********************************/
 
 
+/*******************************UI操作区************************************/
+/*首页打印*/
+void PrintHomePage(void (*Selection)()){
+    cout << endl << "                     ";
+    cout << "Auction management system" << endl;
+    cout << "                         ";
+    cout << "物品竞拍管理系统" << endl;
+    cout << "____________________________________________________________________" << endl << endl << endl<< endl;
+    cout << "                     ";
+    cout << "-------------------------" << endl;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "Welcome to 竞拍管理系统" << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    Selection();
+}
+
+/*首页选项卡*/
+void InitPrintHomePage(){
+    cout << "                     ";
+    cout << "|" << "  请选择要进行的操作： " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "        1.登录         " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "     2.新用户注册      " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout <<"-------------------------" << endl << endl << endl ;
+    cout << "____________________________________________________________________" << endl ;
+    cout << "                     ";
+    cout << "    2018.5.3 By XHSF      " << endl << endl << endl<< endl;
+}
+
+/*首页登录框*/
+void LogPrintHomePage(){
+    ClearScreen();
+    cout << endl << "                     ";
+    cout << "Auction management system" << endl;
+    cout << "                         ";
+    cout << "物品竞拍管理系统" << endl;
+    cout << "____________________________________________________________________" << endl << endl << endl<< endl;
+}
+
+/*新用户注册页面*/
+void RegisterPage(){
+    ClearScreen();
+    cout << endl << "                     ";
+    cout << "Auction management system" << endl;
+    cout << "                         ";
+    cout << "物品竞拍管理系统" << endl;
+    cout << "____________________________________________________________________" << endl << endl << endl<< endl;
+}
+
+/*字体、背景初始化*/
+void InitBackgroundAndFont(){
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),15 | 8 | 128 | 64);//初始化字体
+    system("color F8");//初始化背景
+}
+/*******************************UI操作区************************************/
+
 int main()
 {
-    int Selector;
+    /*******************************变量定义区************************************/
     auctionItems Items;
     auctionItem Item,PreItem,PostItem;
     User UserItem;
     Users UserItems;
+    /*******************************变量定义区************************************/
 
-
-//    AddAuctionItemToFile(Item);
-//    AddAuctionItemToFile(Item);
-//    AddAuctionItemToFile(Item);
-//    AddAuctionItemToFile(Item);
-//    AddAuctionItemToFile(Item);
-//    AddAuctionItemToFile(Item);
-//    AddUserToFile(UserItem);
-//    AddUserToFile(UserItem);
-//    AddUserToFile(UserItem);
-
-
+    /*******************************初始化区************************************/
+    InitBackgroundAndFont();
     CreateUserList(UserItems);
     CreateAuctionList(Items);
+    /*******************************初始化区************************************/
 
 
-    PrintAuctionItems(Items);
-    PrintUsers(UserItems);
-    cout << "--------------------------" << endl;
-    ClearScreen();
-    SearchByNickname(UserItems,"Xiaoss",UserItem);
-    PrintUser(UserItem);
-    SearchById(Items,8,Item);
-    PrintAuctionItem(Item);
-    UserBid(Items,Item,UserItem);
+//    AddAuctionItem(Item);
+//    AddAuctionItemToFile(Item);
+//    AddUser(UserItem);
+//    AddUserToFile(UserItem);
 
-    PrintAuctionItems(Items);
 
+
+
+
+    /*******************************页面操作区************************************/
+    PrintHomePage(InitPrintHomePage);
+    selection = getch();
+    if(selection == '1'){
+        UserLogPrint(UserItems,UserItem);
+    }
+    else if(selection == '2'){
+        Register(UserItems,UserItem);
+    }
+    /*******************************页面操作区************************************/
 
 
 
