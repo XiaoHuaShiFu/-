@@ -80,7 +80,6 @@ void Input_Int(long &Int,char prompt[]);
 /*输出提示并输入字符串型数据*/
 void Input_Str(char *Char,char prompt[]);
 
-
 /*输出提示并输入密码,成功录入返回1，失败返回0*/
 int Input_Password(char *Password,char prompt1[],char prompt2[]);
 
@@ -156,8 +155,17 @@ int TurnoverNumberInAuctionHouse(auctionItems Items,char State[]);
 /*开始拍卖，成功返回1，失败返回0*/
 int  StartAuction(auctionItem &Item);
 
+/*物品搜索页面*/
+int SearchPage(auctionItems &Items,auctionItem &Item,User UserItem);
+
+/*物品清单页面*/
+int ItemsPage(auctionItems &Items,auctionItem &Item,User UserItem);
+
 /*用户竞拍*/
 int UserBid(auctionItems &Items,auctionItem &Item,User UserItem);
+
+/*拍卖行大数据页面*/
+int BigDataPage(auctionItems Items,Users UserItems,auctionItem Item);
 
 /**************************物品函数声明区*****************************/
 
@@ -199,12 +207,18 @@ void PrintUser(User UserItem);
 /*打印用户信息列表*/
 int PrintUsers(Users UserItems);
 
+/*返回当前拍卖行中的用户数*/
+int UserNumberInAuctionHouse(Users UserItems);
+
 /*修改密码函数*/
 int ModifyUserPassword(Users &UserItems,char *Account);
 /**************************用户函数声明区*****************************/
 
 
 /*****************************UI声明区********************************/
+/*打印页面头*/
+void Page_Head(char *Title);
+
 /*首页选项卡*/
 void InitPrintHomePage();
 
@@ -216,6 +230,18 @@ void LogPrintHomePage();
 
 /*新用户注册页面*/
 void RegisterPage();
+
+/*主页*/
+void PrintIndexPage();
+
+/*主页物品搜索页*/
+void PrintIndex_SearchPage();
+
+/*物品清单页面*/
+void PrintIndex_ItemsPage();
+
+/*打印拍卖行大数据页面*/
+void PrintIndex_BigDataPage();
 
 /*字体、背景初始化*/
 void InitBackgroundAndFont();
@@ -375,7 +401,7 @@ void CreateAuctionList(auctionItems &Items){
         Assign_Int(PointerBridge -> Id,temp.Id);
         Assign_Char(PointerBridge -> Category,temp.Category);
         Assign_Char(PointerBridge -> Name,temp.Name);
-        Assign_Char(PointerBridge ->BiddingMode,temp.BiddingMode);
+        Assign_Char(PointerBridge -> BiddingMode,temp.BiddingMode);
         Assign_Int(PointerBridge -> TheHighestPrice,temp.TheHighestPrice);
         Assign_Char(PointerBridge -> TheHighestBidder,temp.TheHighestBidder);
         Assign_Int(PointerBridge -> Evaluation,temp.Evaluation);
@@ -393,20 +419,38 @@ void CreateAuctionList(auctionItems &Items){
 
 /*打印拍卖品，返回1*/
 int PrintAuctionItem(auctionItem Item){
-    cout << "------------------------" << endl;
-    cout << Item.Id << endl;
-    cout << Item.Category << endl;
-    cout << Item.Name << endl;
-    cout << Item.BiddingMode << endl;
-    cout << Item.TheHighestPrice << endl;
-    cout << Item.TheHighestBidder << endl;
-    cout << Item.Evaluation << endl;
-    cout << Item.StartingPrice << endl;
-    cout << Item.OldAndNew << endl;
-    cout << Item.Description << endl;
-    cout << Item.State << endl;
-    cout << Item.Owner << endl;
-    cout << "------------------------" << endl;
+    cout << "                     ";
+    cout << "-------------------------" << endl;
+    cout << "                     ";
+    cout << "------物品信息如下-------" << endl ;
+    cout << "                     ";
+    cout << " 编号：" << Item.Id << endl ;
+    cout << "                     ";
+    cout << " 类型：" << Item.Category << endl ;
+    cout << "                     ";
+    cout << " 名称：" << Item.Name << endl ;
+    cout << "                     ";
+    cout << " 拍卖方式：" << Item.BiddingMode << endl ;
+    cout << "                     ";
+    cout << " 最高价：" << Item.TheHighestPrice << endl ;
+    cout << "                     ";
+    cout << " 最高出价者：" << Item.TheHighestBidder << endl ;
+    cout << "                     ";
+    cout << " 估价：" << Item.Evaluation << endl ;
+    cout << "                     ";
+    cout << " 起拍价：" << Item.StartingPrice << endl ;
+    cout << "                     ";
+    cout << " 新旧：" << Item.OldAndNew << endl ;
+    cout << "                     ";
+    cout << " 描述：" << Item.Description << endl ;
+    cout << "                     ";
+    cout << " 状态：" << Item.State << endl ;
+    cout << "                     ";
+    cout << " 拥有者：" << Item.Owner << endl ;
+    cout << "                     ";
+    cout << "---From Auction By XHSF--" << endl ;
+    cout << "                     ";
+    cout << "-------------------------" << endl;
     return 1;
 }
 
@@ -569,7 +613,7 @@ long TheHighestPriceInAuctionHouse(auctionItems Items,auctionItem &Item){
     long HighestPrice = 0;
     while(Items -> next != NULL){
         Items = Items -> next;
-        if(Items -> TheHighestPrice >= HighestPrice && Equal_Str(Items -> State,"已成交")){
+        if(Items -> TheHighestPrice >= HighestPrice && Equal_Str(Items -> State,Traded)){
             HighestPrice = Items -> TheHighestPrice;
             Item = *Items;
         }
@@ -582,7 +626,7 @@ long TheLowestPriceInAuctionHouse(auctionItems Items,auctionItem &Item){
     long LowestPrice = 0;
     while(Items -> next != NULL){
         Items = Items -> next;
-        if(Items -> TheHighestPrice <= LowestPrice && Equal_Str(Items -> State,"已成交")){
+        if(Items -> TheHighestPrice <= LowestPrice && Equal_Str(Items -> State,Traded)){
             LowestPrice = Items -> TheHighestPrice;
             Item = *Items;
         }
@@ -595,7 +639,7 @@ long TurnoverInAuctionHouse(auctionItems Items){
     long Turnover = 0;
     while(Items -> next != NULL){
         Items = Items -> next;
-        if(Equal_Str(Items -> State,"已成交")) Turnover += (Items -> TheHighestPrice);
+        if(Equal_Str(Items -> State,Traded)) Turnover += (Items -> TheHighestPrice);
     }
     return Turnover;
 }
@@ -631,10 +675,16 @@ int  StartAuction(auctionItems &Items,auctionItem &Item){
 /*用户竞拍，出价成功返回1，失败返回0*/
 int UserBid(auctionItems &Items,auctionItem &Item,User UserItem){
     long Price;
-    cout << "当前物品最高价：" << Item.TheHighestPrice << endl;
-    cout << "当前物品起拍价：" << Item.StartingPrice << endl;
-    cout << "当前物品估价：" << Item.Evaluation << endl;
-    cout << "请输入您的出价：";
+    cout << endl << endl << "                     ";
+    cout << "------物品信息如下-------" << endl ;
+    cout << "                     ";
+    cout << " 当前物品最高价：" << Item.TheHighestPrice << endl;
+    cout << "                     ";
+    cout << " 当前物品起拍价：" << Item.StartingPrice << endl;
+    cout << "                     ";
+    cout << " 当前物品估价：" << Item.Evaluation << endl;
+    cout << "                     ";
+    cout << " 请输入您的出价：";
     scanf("%ld",&Price);
     if(Price > Item.TheHighestPrice && Price > Item.StartingPrice){
         DeleteItem(Items,Item.Id,Item);
@@ -652,6 +702,225 @@ int UserBid(auctionItems &Items,auctionItem &Item,User UserItem){
     }
 }
 
+/*物品搜索页面*/
+int SearchPage(auctionItems &Items,auctionItem &Item,User UserItem){
+    PrintIndex_SearchPage();
+    char Selection;
+    Selection = getch();
+    char TITLE[20] = "    物品搜索";
+    int Id;
+    char Name[30],Category[20];
+    switch(Selection){
+        case '1':
+                Page_Head(TITLE);
+                cout << "                     ";
+                cout << "   请输入物品编号：";
+                scanf("%ld",&Id);
+                if(SearchById(Items,Id,Item)){
+                    PrintAuctionItem(Item);
+                    cout << "                     ";
+                    cout <<"按1进行竞拍，按2返回主页";
+                    Selection = getch();
+                    switch(Selection){
+                        case '1':
+                                if(UserBid(Items,Item,UserItem)){
+                                    cout << "                     ";
+                                    cout <<"竞拍成功，1秒后返回主页";
+                                    Delay(1000);
+                                    return 1;
+                                }else{
+                                    cout << "                     ";
+                                    cout <<"竞拍失败，1秒后返回主页";
+                                    Delay(1000);
+                                    return 1;
+                                }
+                                break;
+                        case '2':return 1;break;
+                    }
+
+                }else{
+                    cout << "                     ";
+                    cout <<"搜索失败，1秒后返回主页";
+                    Delay(1000);
+                    return 1;
+                }
+                break;
+        case '2':
+                Page_Head(TITLE);
+                cout << "                     ";
+                cout << "   请输入物品类别：";
+                scanf("%s",Category);
+                if(SearchByCategory(Items,Category)){
+                    cout << "                     ";
+                    cout <<"按1进行竞拍，按2返回主页";
+                    Selection = getch();
+                    switch(Selection){
+                        case '1':
+                                cout << endl << "                     ";
+                                cout << "   请输入物品编号：";
+                                scanf("%ld",&Id);
+                                SearchById(Items,Id,Item);
+                                if(UserBid(Items,Item,UserItem)){
+                                    cout << "                     ";
+                                    cout <<"竞拍成功，1秒后返回主页";
+                                    Delay(1000);
+                                    return 1;
+                                }else{
+                                    cout << "                     ";
+                                    cout <<"竞拍失败，1秒后返回主页";
+                                    Delay(1000);
+                                    return 1;
+                                }
+                                break;
+                        case '2':return 1;break;
+                    }
+
+                }else{
+                    cout << "                     ";
+                    cout <<"搜索失败，1秒后返回主页";
+                    Delay(1000);
+                    return 1;
+                }
+                break;
+        case '3':
+                Page_Head(TITLE);
+                cout << "                     ";
+                cout << "   请输入物品名称：";
+                scanf("%s",Name);
+                if(SearchByName(Items,Name,Item)){
+                    PrintAuctionItem(Item);
+                    cout << "                     ";
+                    cout <<"按1进行竞拍，按2返回主页";
+                    Selection = getch();
+                    switch(Selection){
+                        case '1':
+                                if(UserBid(Items,Item,UserItem)){
+                                    cout << "                     ";
+                                    cout <<"竞拍成功，1秒后返回主页";
+                                    Delay(1000);
+                                    return 1;
+                                }else{
+                                    cout << "                     ";
+                                    cout <<"竞拍失败，1秒后返回主页";
+                                    Delay(1000);
+                                    return 1;
+                                }
+                                break;
+                        case '2':return 1;break;
+                    }
+
+                }else{
+                    cout << "                     ";
+                    cout <<"搜索失败，1秒后返回主页";
+                    Delay(1000);
+                    return 1;
+                }
+                break;
+        case '4':
+                return 1;
+                break;
+    }
+}
+
+/*物品清单页面*/
+int ItemsPage(auctionItems &Items,auctionItem &Item,User UserItem){
+    PrintIndex_ItemsPage();
+    PrintAuctionItems(Items);
+    char Selection;
+    int Id;
+    cout << endl << "                     ";
+    cout << "  请选择要进行的操作：" << endl << endl;
+    cout << "                     ";
+    cout << "      1.进行竞拍"    << endl << endl;
+    cout << "                     ";
+    cout << "      2.返回主页"    << endl << endl;
+    Selection = getch();
+    switch(Selection){
+        case '1':
+                cout << "                     ";
+                cout << "   请输入物品编号：";
+                scanf("%ld",&Id);
+                if(SearchById(Items,Id,Item)){
+                    if(UserBid(Items,Item,UserItem)){
+                        cout << "                     ";
+                        cout <<"竞拍成功，1秒后返回主页";
+                        Delay(1000);
+                        return 1;
+                    }else{
+                        cout << "                     ";
+                        cout <<"竞拍失败，1秒后返回主页";
+                        Delay(1000);
+                        return 1;
+                    }
+                }else{
+                    cout << "                     ";
+                    cout <<"物品不存在，1秒后返回主页";
+                    Delay(1000);
+                    return 1;
+                }
+                break;
+        case '2':
+                return 1;
+                break;
+    }
+}
+
+/*拍卖行大数据页面*/
+int BigDataPage(auctionItems Items,Users UserItems,auctionItem Item){
+    PrintIndex_BigDataPage();
+    char Selection;
+    char State1[7] = "已成交";
+    char State2[7] = "拍卖中";
+    cout << "                     ";
+    cout << "-------------------------" << endl;
+    cout << "                     ";
+    cout << "                       " << endl ;
+    cout << "                     ";
+    cout << " Welcome to 拍卖行大数据 " << endl << endl;
+    cout << "                     ";
+    cout << "-------------------------" << endl;
+    cout << "                     ";
+    cout << "当前拍卖行用户总数是： " << UserNumberInAuctionHouse(UserItems) << endl;
+    cout << "                     ";
+//    cout << "-------------------------" << endl;
+//    cout << "                     ";
+//    TheHighestPriceInAuctionHouse(Items,Item);
+//    cout << "  当前最高价格的拍卖品是"  << endl;
+//    cout << "                     ";
+//    cout << "*********" << Item.Name <<"**********" << endl;
+//    cout << "                     ";
+//    cout << "*****成交价为：" << Item.TheHighestPrice << "*****"<< endl;
+//    cout << "                     ";
+//    cout << "-------------------------" << endl;
+//    cout << "                     ";
+//    TheLowestPriceInAuctionHouse(Items,Item);
+//    cout << "  当前最低价格的拍卖品是 " << endl;
+//    cout << "                     ";
+//    cout << "*********" << Item.Name <<"**********" << endl;
+//    cout << "                     ";
+//    cout << "*****成交价为：" << Item.TheHighestPrice << "*****" << endl;
+//    cout << "                     ";
+    cout << "-------------------------" << endl;
+    cout << "                     ";
+    cout << "当前已拍卖的物品数是：" << TurnoverNumberInAuctionHouse(Items,State1) << endl;
+    cout << "                     ";
+    cout << "-------------------------" << endl;
+    cout << "                     ";
+    cout << "当前拍卖中的物品数是：" << TurnoverNumberInAuctionHouse(Items,State2) << endl;
+    cout << "                     ";
+    cout << "-------------------------" << endl;
+    cout << "                     ";
+    cout << "当前拍卖行的总交易额是：" << TurnoverInAuctionHouse(Items) << endl;
+    cout << "                     ";
+    cout << "-------------------------" << endl << endl << endl;
+    cout << endl << "                     ";
+    cout << "    按任意键返回主页     " << endl << endl;
+    cout << "____________________________________________________________________" << endl ;
+    cout << "                     ";
+    cout << "    2018.5.3 By XHSF      " << endl << endl << endl<< endl;
+    Selection = getch();
+    return 1;
+}
 
 /****************************拍卖品链表操作区*******************************/
 
@@ -812,6 +1081,16 @@ int SearchByNickname(Users UserItems,char Nickname[],User &UserItem){
     return 0;
 }
 
+/*返回当前拍卖行中的用户数*/
+int UserNumberInAuctionHouse(Users UserItems){
+    long UserNumber = 0;
+    while(UserItems -> next != NULL){
+        UserItems = UserItems -> next;
+        UserNumber++;
+    }
+    return UserNumber;
+}
+
 /*打印用户信息*/
 void PrintUser(User UserItem){
     cout << "------------------------" << endl;
@@ -873,6 +1152,9 @@ int UserLogPrint(Users UserItems,User &UserItem){
             cout <<  endl ;
             FlagLog = UserLog(UserItems,UserItem,Account,Password);
         }while(FlagLog != 1);
+        cout << endl << endl << endl ;
+        cout << "                     ";
+        cout << "  登录中，请等待...  " << endl;
         Delay(500);
 }
 
@@ -896,13 +1178,20 @@ int ModifyUserPassword(Users &UserItems,char *Account){
 
 
 /*******************************UI操作区************************************/
-/*首页打印*/
-void PrintHomePage(void (*Selection)()){
+/*打印页面头*/
+void Page_Head(char *Title){
+    ClearScreen();
     cout << endl << "                     ";
     cout << "Auction management system" << endl;
     cout << "                         ";
-    cout << "物品竞拍管理系统" << endl;
+    cout << Title << endl;
     cout << "____________________________________________________________________" << endl << endl << endl<< endl;
+}
+
+/*首页打印*/
+void PrintHomePage(void (*Selection)()){
+    char TITLE[20] = "物品竞拍管理系统";
+    Page_Head(TITLE);
     cout << "                     ";
     cout << "-------------------------" << endl;
     cout << "                     ";
@@ -939,22 +1228,108 @@ void InitPrintHomePage(){
 
 /*首页登录框*/
 void LogPrintHomePage(){
-    ClearScreen();
-    cout << endl << "                     ";
-    cout << "Auction management system" << endl;
-    cout << "                         ";
-    cout << "物品竞拍管理系统" << endl;
-    cout << "____________________________________________________________________" << endl << endl << endl<< endl;
+    char TITLE[20] = "    登陆界面";
+    Page_Head(TITLE);
 }
 
 /*新用户注册页面*/
 void RegisterPage(){
-    ClearScreen();
-    cout << endl << "                     ";
-    cout << "Auction management system" << endl;
-    cout << "                         ";
-    cout << "物品竞拍管理系统" << endl;
-    cout << "____________________________________________________________________" << endl << endl << endl<< endl;
+    char TITLE[20] = "    注册页面";
+    Page_Head(TITLE);
+}
+
+/*主页*/
+void PrintIndexPage(){
+    char TITLE[20] = "      主页";
+    Page_Head(TITLE);
+    cout << "                     ";
+    cout << "-------------------------" << endl;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "    Welcome to 主页    " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "  请选择要进行的操作： " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "      1.物品搜索       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "      2.物品清单       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "    3.拍卖行大数据     " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "   4.进入管理员页面    " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "    5.进入我的页面     " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "-------------------------" << endl << endl << endl;
+    cout << "____________________________________________________________________" << endl ;
+    cout << "                     ";
+    cout << "    2018.5.3 By XHSF      " << endl << endl << endl<< endl;
+}
+
+/*打印物品搜索页*/
+void PrintIndex_SearchPage(){
+    char TITLE[20] = "    物品搜索";
+    Page_Head(TITLE);
+    cout << "                     ";
+    cout << "-------------------------" << endl;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "  Welcome to 搜索页面  " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "   请选择搜索的类型：  " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "       1.编号搜索      " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "       2.类别搜索      " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "     3.物品名称搜索    " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "       4.返回主页      " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "-------------------------" << endl << endl << endl;
+    cout << "____________________________________________________________________" << endl ;
+    cout << "                     ";
+    cout << "    2018.5.3 By XHSF      " << endl << endl << endl<< endl;
+}
+
+/*打印物品清单页面*/
+void PrintIndex_ItemsPage(){
+    char TITLE[20] = "    物品清单";
+    Page_Head(TITLE);
+}
+
+/*打印拍卖行大数据页面*/
+void PrintIndex_BigDataPage(){
+    char TITLE[20] = "   拍卖行大数据";
+    Page_Head(TITLE);
 }
 
 /*字体、背景初始化*/
@@ -967,10 +1342,13 @@ void InitBackgroundAndFont(){
 int main()
 {
     /*******************************变量定义区************************************/
-    auctionItems Items;
-    auctionItem Item,PreItem,PostItem;
-    User UserItem;
-    Users UserItems;
+    auctionItems Items;//用户表
+    auctionItem Item;//用户
+    auctionItem PreItem,PostItem;//用户信息修改前后
+    User UserItem;//用户
+    Users UserItems;//用户表
+    char selection;//操作选择
+    int FlagIndex = 0;
     /*******************************变量定义区************************************/
 
     /*******************************初始化区************************************/
@@ -982,14 +1360,19 @@ int main()
 
 //    AddAuctionItem(Item);
 //    AddAuctionItemToFile(Item);
+//    AddAuctionItem(Item);
+//    AddAuctionItemToFile(Item);
+//    AddAuctionItem(Item);
+//    AddAuctionItemToFile(Item);
 //    AddUser(UserItem);
 //    AddUserToFile(UserItem);
 
 
 
 
+    /*****************************页面操作区********************************/
 
-    /*******************************页面操作区************************************/
+    /*************登录页面*************/
     PrintHomePage(InitPrintHomePage);
     selection = getch();
     if(selection == '1'){
@@ -998,6 +1381,55 @@ int main()
     else if(selection == '2'){
         Register(UserItems,UserItem);
     }
+    /*************登录页面*************/
+    /***************主页***************/
+    IndexPage:
+    PrintIndexPage();
+    if(FlagIndex == 1){
+        cout << "                     ";
+        cout << " 选择错误，请从新选择操作" << endl ;
+    }
+    selection = getch();
+    switch(selection){
+        case '1':
+                FlagIndex = 0;
+                if(SearchPage(Items,Item,UserItem)==1){
+                    goto IndexPage;
+                }
+                break;
+        case '2':
+                FlagIndex = 0;
+                if(ItemsPage(Items,Item,UserItem)){
+                    goto IndexPage;
+                }
+                break;
+        case '3':
+                FlagIndex = 0;
+                if(BigDataPage(Items,UserItems,Item)){
+                    goto IndexPage;
+                }
+                break;
+        case '4':
+                FlagIndex = 0;
+                goto ManagerPage;
+                break;
+        case '5':
+                FlagIndex = 0;
+                goto MyPage;
+                break;
+        default:
+                FlagIndex = 1;
+                goto IndexPage;
+    }
+    /***************主页***************/
+    /***************管理员页面***************/
+    ManagerPage:
+    /***************管理员页面***************/
+    /***************我的页面***************/
+    MyPage:
+    cout << "llala"<< endl;
+    /***************我的页面***************/
+
     /*******************************页面操作区************************************/
 
 
