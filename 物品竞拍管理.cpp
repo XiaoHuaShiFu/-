@@ -137,6 +137,9 @@ int SearchByCategory(auctionItems Items,char Category[]);
 /*通过State寻找物品，找不到返回0，找到返回找到的个数*/
 int SearchByState(auctionItems Items,char State[]);
 
+/*通过TheHighestBidder寻找物品，找不到返回0，找到返回找到的个数*/
+int SearchByTheHighestBidder(auctionItems Items,char TheHighestBidder[]);
+
 /*通过Owner寻找物品，找不到返回0，找到返回找到的个数*/
 int SearchByOwner(auctionItems Items,char Owner[]);
 
@@ -211,7 +214,10 @@ int PrintUsers(Users UserItems);
 int UserNumberInAuctionHouse(Users UserItems);
 
 /*修改密码函数*/
-int ModifyUserPassword(Users &UserItems,char *Account);
+int ModifyUserPassword(Users &UserItems,char *Account,char *Password);
+
+/*修改密码页面*/
+int ModifyPasswordPage(Users &UserItems,User &UserItem);
 /**************************用户函数声明区*****************************/
 
 
@@ -242,6 +248,12 @@ void PrintIndex_ItemsPage();
 
 /*打印拍卖行大数据页面*/
 void PrintIndex_BigDataPage();
+
+/*打印我的页面*/
+void PrintMyPage();
+
+/*打印我的竞拍页面*/
+void PrintMyAuctions(auctionItems Items,User UserItem);
 
 /*字体、背景初始化*/
 void InitBackgroundAndFont();
@@ -588,6 +600,19 @@ int SearchByState(auctionItems Items,char State[]){
     while(Items -> next != NULL){
         Items = Items -> next;
         if(Equal_Str(Items->State,State)){
+            Quantity++;
+            PrintAuctionItem(*Items);
+        }
+    }
+    return Quantity;
+}
+
+/*通过TheHighestBidder寻找物品，找不到返回0，找到返回找到的个数*/
+int SearchByTheHighestBidder(auctionItems Items,char TheHighestBidder[]){
+    int Quantity = 0;
+    while(Items -> next != NULL){
+        Items = Items -> next;
+        if(Equal_Str(Items->TheHighestBidder,TheHighestBidder)){
             Quantity++;
             PrintAuctionItem(*Items);
         }
@@ -1159,11 +1184,9 @@ int UserLogPrint(Users UserItems,User &UserItem){
 }
 
 /*修改密码函数*/
-int ModifyUserPassword(Users &UserItems,char *Account){
+int ModifyUserPassword(Users &UserItems,char *Account,char *Password){
 
     User UserItem;
-    char Password[20];
-    Input_Password(Password,b5,b6);
     DeleteUser(UserItems,Account,UserItem);
     Assign_Char(UserItem.Password,Password);
     FILE *fp;
@@ -1172,6 +1195,45 @@ int ModifyUserPassword(Users &UserItems,char *Account){
     CreateUserList(UserItems);//重新初始化链表
     fclose(fp);
     return 1;
+}
+
+/*修改密码页面*/
+int ModifyPasswordPage(Users &UserItems,User &UserItem){
+    char TITLE[20] = "    修改密码";
+    char Password[20];
+    Page_Head(TITLE);
+    int idx = 0;
+    char c,FirstInput[20],SecondInput[20];
+    cout << "                     ";
+    cout << "   请输入原密码：" ;
+    while((c = getch()) != '\r'){
+        FirstInput[idx++] = c;
+        cout << '*';
+    }
+    FirstInput[idx] = '\0';
+    idx = 0;
+    cout << endl << endl << "                     ";
+    cout << "   请输入新密码：";
+    while((c = getch()) != '\r'){
+        SecondInput[idx++] = c;
+        cout << '*';
+    }
+    SecondInput[idx] = '\0';
+    cout << endl;
+    if(Equal_Str(FirstInput,UserItem.Password)){
+        Assign_Char(Password,SecondInput);
+        ModifyUserPassword(UserItems,UserItem.Account,Password);
+        cout << endl << endl << "                  ";
+        cout << "密码修改成功，1秒后返回我的界面：";
+        Delay(1000);
+        return 1;
+    }
+    else{
+        cout << "                     ";
+        cout << "原密码输入错误，1秒后返回我的界面：";
+        Delay(1000);
+        return 1;
+    }
 }
 
 /****************************用户链表操作区*********************************/
@@ -1332,6 +1394,55 @@ void PrintIndex_BigDataPage(){
     Page_Head(TITLE);
 }
 
+/*打印我的页面*/
+void PrintMyPage(){
+    char TITLE[20] = "     我的页面";
+    Page_Head(TITLE);
+    cout << "                     ";
+    cout << "-------------------------" << endl;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "  Welcome to 我的页面  " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "  请选择要进行的操作： " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "      1.修改密码       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "      2.我的竞拍       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "      3.退出登录       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "      4.返回主页       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "-------------------------" << endl << endl << endl;
+    cout << "____________________________________________________________________" << endl ;
+    cout << "                     ";
+    cout << "    2018.5.3 By XHSF      " << endl << endl << endl<< endl;
+}
+
+/*打印我的竞拍页面*/
+void PrintMyAuctions(auctionItems Items,User UserItem){
+    char TITLE[20] = "     我的竞拍";
+    Page_Head(TITLE);
+    SearchByTheHighestBidder(Items,UserItem.Nickname);
+    cout << endl << "                     ";
+    cout << "  按任意键返回我的页面 "<< endl ;
+    getch();
+}
+
 /*字体、背景初始化*/
 void InitBackgroundAndFont(){
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),15 | 8 | 128 | 64);//初始化字体
@@ -1373,61 +1484,93 @@ int main()
     /*****************************页面操作区********************************/
 
     /*************登录页面*************/
-    PrintHomePage(InitPrintHomePage);
-    selection = getch();
-    if(selection == '1'){
-        UserLogPrint(UserItems,UserItem);
-    }
-    else if(selection == '2'){
-        Register(UserItems,UserItem);
-    }
+    LogPage:
+        PrintHomePage(InitPrintHomePage);
+        selection = getch();
+        if(selection == '1'){
+            UserLogPrint(UserItems,UserItem);
+        }
+        else if(selection == '2'){
+            Register(UserItems,UserItem);
+        }
     /*************登录页面*************/
     /***************主页***************/
     IndexPage:
-    PrintIndexPage();
-    if(FlagIndex == 1){
-        cout << "                     ";
-        cout << " 选择错误，请从新选择操作" << endl ;
-    }
-    selection = getch();
-    switch(selection){
-        case '1':
-                FlagIndex = 0;
-                if(SearchPage(Items,Item,UserItem)==1){
+        PrintIndexPage();
+        if(FlagIndex == 1){
+            cout << "                     ";
+            cout << " 选择错误，请从新选择操作" << endl ;
+        }
+        selection = getch();
+        switch(selection){
+            case '1':
+                    FlagIndex = 0;
+                    if(SearchPage(Items,Item,UserItem)==1){
+                        goto IndexPage;
+                    }
+                    break;
+            case '2':
+                    FlagIndex = 0;
+                    if(ItemsPage(Items,Item,UserItem)){
+                        goto IndexPage;
+                    }
+                    break;
+            case '3':
+                    FlagIndex = 0;
+                    if(BigDataPage(Items,UserItems,Item)){
+                        goto IndexPage;
+                    }
+                    break;
+            case '4':
+                    FlagIndex = 0;
+                    goto ManagerPage;
+                    break;
+            case '5':
+                    FlagIndex = 0;
+                    goto MyPage;
+                    break;
+            default:
+                    FlagIndex = 1;
                     goto IndexPage;
-                }
-                break;
-        case '2':
-                FlagIndex = 0;
-                if(ItemsPage(Items,Item,UserItem)){
-                    goto IndexPage;
-                }
-                break;
-        case '3':
-                FlagIndex = 0;
-                if(BigDataPage(Items,UserItems,Item)){
-                    goto IndexPage;
-                }
-                break;
-        case '4':
-                FlagIndex = 0;
-                goto ManagerPage;
-                break;
-        case '5':
-                FlagIndex = 0;
-                goto MyPage;
-                break;
-        default:
-                FlagIndex = 1;
-                goto IndexPage;
-    }
+        }
     /***************主页***************/
     /***************管理员页面***************/
     ManagerPage:
     /***************管理员页面***************/
     /***************我的页面***************/
     MyPage:
-    cout << "llala"<< endl;
+        PrintMyPage();
+        if(FlagIndex == 1){
+            cout << "                     ";
+            cout << " 选择错误，请从新选择操作" << endl ;
+        }
+        selection = getch();
+        switch(selection){
+            case '1':
+                    ModifyPasswordPage(UserItems,UserItem);
+                    FlagIndex = 0;
+                    goto MyPage;
+                    break;
+            case '2':
+                    PrintMyAuctions(Items,UserItem);
+                    FlagIndex = 0;
+                    goto MyPage;
+                    break;
+            case '3':
+                    FlagIndex = 0;
+                    cout << "                     ";
+                    cout << "  退出登录中，请等候..." << endl ;
+                    Delay(1000);
+                    goto LogPage;
+                    break;
+            case '4':
+                    FlagIndex = 0;
+                    goto IndexPage;
+                    break;
+            default:
+                    FlagIndex = 1;
+                    goto MyPage;
+        }
     /***************我的页面***************/
 
     /*******************************页面操作区************************************/
