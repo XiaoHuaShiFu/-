@@ -48,9 +48,11 @@ char a5[30] = "请输入物品估价:";
 char a6[30] = "请输入物品新旧:";
 char a7[30] = "请输入物品描述:";
 char a8[30] = "请输入物品状态:";
-char a9[30] = "请输入物品所有者:";
+char a9[30] = "请输入物品拥有者:";
 char a10[30] = "请输入物品起拍价:";
 char a11[30] = "1:明拍      2:暗拍";
+char a12[30] = "请输入物品最高出价者:";
+char a13[30] = "请输入物品当前最高价格:";
 char b1[30] = "请输入账号:";
 char b2[30] = "请输入昵称:";
 char b3[30] = "请输入密码:";
@@ -119,11 +121,14 @@ int DeleteItem(auctionItems Items,long Id,auctionItem &Item);
 /*删除物品信息并打印删除结果*/
 void DeleteItemAndPrint(auctionItems &Items,long Id,auctionItem &Item);
 
+/*删除物品信息页面*/
+int DeleteItemPage(auctionItems &Items);
+
 /*修改某个拍卖品的信息*/
 int ModifyItem(auctionItems &Items,long Id,auctionItem &PreItem,auctionItem &PostItem);
 
 /*修改某个拍卖品的信息并打印*/
-int ModifyItemAndPrint(auctionItems &Items,long Id,auctionItem &PreItem,auctionItem &PostItem);
+int ModifyItemAndPage(auctionItems &Items);
 
 /*通过Id寻找物品，找不到返回0，找到返回1*/
 int SearchById(auctionItems Items,long Id,auctionItem &Item);
@@ -587,6 +592,49 @@ void DeleteItemAndPrint(auctionItems &Items,long Id,auctionItem &Item){
     }
 }
 
+/*删除物品信息页面*/
+int DeleteItemPage(auctionItems &Items){
+    long Id;
+    int Flag = 1;
+    auctionItem Item;
+    char TITLE[20] = "删除物品信息界面";
+    char selection;
+    Page_Head(TITLE);
+    cout << endl << "                     " << "请输入要删除物品的编号:" ;
+    do{
+        if(!Flag){
+            cout << endl << "                     " << "请输入正确的物品编号:" ;
+        }
+        scanf("%ld",&Id);
+        if(SearchById(Items,Id,Item)){
+            PrintAuctionItem(Item);
+            cout << endl << "                     " << "1：确认删除 2：放弃删除" ;
+            do{
+                if(!Flag){
+                    cout << endl << endl << "                     " << "    请选择正确的操作" ;
+                    cout << endl << endl << "                     " << "1：确认删除 2：放弃删除" ;
+                }
+                selection = getch();
+                switch(selection){
+                    case '1':
+                            DeleteItem(Items,Id,Item);
+                            cout << endl << endl << "                     " << "删除成功，1秒后放回上一页" ;
+                            Delay(1000);
+                            return 1;
+                    case '2':
+                            cout << endl << endl << "                     " << "删除失败，1秒后放回上一页" ;
+                            Delay(1000);
+                            return 1;
+                    default:Flag = 0;
+                }
+            }while(!Flag);
+        }else{
+            Flag = 0;
+        }
+    }while(!Flag);
+}
+
+
 /*修改某个拍卖品的信息，如果成功修改返回1，找不到要修改的物品返回0*/
 int ModifyItem(auctionItems &Items,long Id,auctionItem &PreItem,auctionItem &PostItem){
     if(DeleteItem(Items,Id,PreItem) == -2){//删除原物品信息
@@ -598,16 +646,120 @@ int ModifyItem(auctionItems &Items,long Id,auctionItem &PreItem,auctionItem &Pos
     return 1;
 }
 
-/*修改某个拍卖品的信息并打印，如果成功修改返回1，修改失败返回0*/
-int ModifyItemAndPrint(auctionItems &Items,long Id,auctionItem &PreItem,auctionItem &PostItem){
-    if(ModifyItem(Items,4,PreItem,PostItem)){
-        cout << "-------------打印修改前物品的信息---------------" <<endl;
-        PrintAuctionItem(PreItem);
-        cout << "-------------打印修改后物品的信息---------------" <<endl;
-        PrintAuctionItem(PostItem);
-        return 1;
-    }
-    return 0;
+/*修改物品信息页面*/
+int ModifyItemAndPage(auctionItems &Items){
+    char TITLE[20] = "修改物品信息界面";
+    Page_Head(TITLE);
+    auctionItem PostItem,PreItem;
+    int Flag = 1;
+    char selection;
+    char Bright[5] = "明拍",Dark[5] = "暗拍";
+    char New[3] = "新",Old[3] = "旧";
+    char Auctioning[7] = "拍卖中",Dealt[7] = "已成交";
+    cout << "                     ";
+    do{
+        if(Flag == 0){
+            cout << endl  << "                     " << "该物品编号不存在，请重新输入"<< endl << endl << "                     ";
+        }
+        Input_Int(PostItem.Id,a1);
+        Flag = SearchById(Items,PostItem.Id,PostItem);
+    }while(Flag == 0);
+    cout << endl << "                     " << "         修改前" << endl;
+    PrintAuctionItem(PostItem);
+    Flag = 0;
+    cout << endl << "                     ";
+    Input_Str(PostItem.Category,a2);
+    cout << endl << "                     ";
+    Input_Str(PostItem.Name,a3);
+    cout << endl << "                     " << "请选择物品拍卖模式:" << endl << endl << "                     " << a11;
+    do{
+        if(Flag == 1){
+            cout << endl << endl << "                     ";
+            cout << "请选择正确的拍卖模式" << endl << endl << "                     " << a11;
+        }
+        selection = getch();
+        if(selection == '1'){
+            Assign_Char(PostItem.BiddingMode,Bright);
+            Flag = 0;
+        }else if(selection =='2'){
+            Assign_Char(PostItem.BiddingMode,Dark);
+            Flag = 0;
+        }else{
+            Flag = 1;
+        }
+    }while(Flag);
+    cout << endl << endl << "                     ";
+    Input_Int(PostItem.TheHighestPrice,a13);
+    cout <<endl << "                     ";
+    Input_Str(PostItem.TheHighestBidder,a12);
+    cout <<endl << "                     ";
+    Input_Int(PostItem.Evaluation,a5);
+    cout << endl << "                     ";
+    Input_Int(PostItem.StartingPrice,a10);
+    cout << endl << "                     " << "请选择物品新旧状态:" << endl << endl << "                     " << "1:新          2:旧";
+    do{
+        if(Flag == 1){
+            cout << endl << endl << "                     ";
+            cout << "请选择正确的新旧状态" << endl << endl << "                     " << "1:新          2:旧";
+        }
+        selection = getch();
+        if(selection == '1'){
+            Assign_Char(PostItem.OldAndNew,New);
+            Flag = 0;
+        }else if(selection =='2'){
+            Assign_Char(PostItem.OldAndNew,Old);
+            Flag = 0;
+        }else{
+            Flag = 1;
+        }
+    }while(Flag);
+    cout << endl << endl << "                     ";
+    Input_Str(PostItem.Description,a7);
+    cout << endl << endl << "                     " << "请选择物品拍卖状态:" << endl << endl << "                     " << "1:拍卖中  2:已成交";
+    do{
+        if(Flag == 1){
+            cout << endl << endl << "                     ";
+            cout << "请选择正确的拍卖状态" << endl << endl << "                     " << "1:拍卖中  2:已成交";
+        }
+        selection = getch();
+        if(selection == '1'){
+            Assign_Char(PostItem.State,Auctioning);
+            Flag = 0;
+        }else if(selection =='2'){
+            Assign_Char(PostItem.State,Dealt);
+            Flag = 0;
+        }else{
+            Flag = 1;
+        }
+    }while(Flag);
+    cout << endl << endl << "                     ";
+    Input_Str(PostItem.Owner,a9);
+    cout << endl << "                     " << "         修改后" << endl;
+    PrintAuctionItem(PostItem);
+    cout << endl << "                     " << "    请确认是否要修改" << endl;
+    cout << endl << "                     " << "1：确认修改 2：放弃修改" << endl;
+    selection = getch();
+    do{
+        if(Flag == 1){
+            cout << endl << "                     ";
+            cout << "    请选择正确的操作  " << endl << endl << "                     " << "1：确认修改 2：放弃修改";
+        }
+        selection = getch();
+        if(selection == '1'){
+            DeleteItem(Items,PostItem.Id,PreItem);
+            AddAuctionItemToFile(PostItem);//输入修改后的信息
+            CreateAuctionList(Items);//重新初始化链表
+            cout << endl << endl << "                  " << "修改成功，1秒后返回上一级页面" << endl;
+            Delay(1000);
+            return 1;
+        }else if(selection =='2'){
+            cout << endl << endl << "                  " << "修改失败，1秒后返回上一级页面" << endl;
+            Delay(1000);
+            return 1;
+        }else{
+            Flag = 1;
+        }
+    }while(Flag);
 }
 
 /*通过Id寻找物品，找不到返回0，找到返回1*/
@@ -1009,7 +1161,9 @@ int BigDataPage(auctionItems Items,Users UserItems,auctionItem Item){
 void AddAuctionItemPage(auctionItems &Items,auctionItem &Item){
     char TITLE[20] = "录入物品信息界面";
     Page_Head(TITLE);
-    AddAuctionItem(Items,Item);
+    AddAuctionItem(Items,Item);//添加物品
+    AddAuctionItemToFile(Item);//添加物品到文件
+    CreateAuctionList(Items);//初始化物品链表
     cout << "                     ";
     cout << "                       " << endl ;
     cout << "                ";
@@ -1671,10 +1825,12 @@ int main()
                     goto ManagerPage;
                     break;
             case '2':
+                    ModifyItemAndPage(Items);
                     FlagIndex = 0;
                     goto ManagerPage;
                     break;
             case '3':
+                    DeleteItemPage(Items);
                     FlagIndex = 0;
                     goto ManagerPage;
                     break;
