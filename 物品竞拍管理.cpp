@@ -978,10 +978,12 @@ int UserBid(auctionItems &Items,auctionItem &Item,User UserItem){
         cout << endl << endl << "                     ";
         cout << "------物品进行暗拍-------" << endl << endl;
     }
+    cout << "                ";
+    cout << "注：拍卖行当前不支持超过2亿元的交易" << endl << endl;
     cout << "                     ";
     cout << " 请输入您的出价：";
     scanf("%ld",&Price);
-    if(Price > Item.TheHighestPrice && Price > Item.StartingPrice){
+    if(Price > Item.TheHighestPrice && Price > Item.StartingPrice && Price <= 2000000000){
         DeleteItem(Items,Item.Id,Item);
         Assign_Char(Item.TheHighestBidder,UserItem.Nickname);
         Assign_Int(Item.TheHighestPrice,Price);
@@ -1265,14 +1267,23 @@ void Register(Users &UserItems,User &UserItem){
         if(FlagAccount){
             cout << "                     ";
             cout << "   该账号已被注册    " << endl << endl;
+            memset(Account,'\0',sizeof(Account));
+            memset(Password,'\0',sizeof(Password));
+            memset(Nickname,'\0',sizeof(Nickname));
         }
         if(FlagPassword < 6){
             cout << "                     ";
             cout << "密码应大于等于6个字符" << endl << endl;
+            memset(Account,'\0',sizeof(Account));
+            memset(Password,'\0',sizeof(Password));
+            memset(Nickname,'\0',sizeof(Nickname));
         }
         if(FlagNickname < 4){
             cout << "                     ";
             cout << "昵称应大于等于4个字符" << endl << endl;
+            memset(Account,'\0',sizeof(Account));
+            memset(Password,'\0',sizeof(Password));
+            memset(Nickname,'\0',sizeof(Nickname));
         }
         cout << "                     ";
         cout << "昵称：" ;
@@ -1444,6 +1455,7 @@ int UserLogPrint(Users UserItems,User &UserItem){
             if(FlagLog!=1){
                 cout << "                        ";
                 cout << "密码或账号错误，请重新登录" << endl ;
+                idx = 0;//置零
             }
             cout<< endl << endl  << "                     ";
             cout << "账号：" ;
@@ -1451,18 +1463,18 @@ int UserLogPrint(Users UserItems,User &UserItem){
             cout<< endl << endl  << "                     ";
             cout  << "密码：" ;
             while((c = getch()) != '\r'){
-            if(c == '\b'){
-                if(idx != 0){
-                    cout << '\b';
-                    idx--;
-                    continue;
-                    }
-                    else{
+                if(c == '\b'){
+                    if(idx != 0){
+                        cout << '\b';
+                        idx--;
                         continue;
-                    }
+                        }
+                        else{
+                            continue;
+                        }
                 }
-                Password[idx++] = c;
-                cout << '*';
+                    Password[idx++] = c;
+                    cout << '*';
             }
             Password[idx] = '\0';
             cout <<  endl ;
@@ -1498,24 +1510,53 @@ int ModifyPasswordPage(Users &UserItems,User &UserItem){
     cout << "                     ";
     cout << "   请输入原密码：" ;
     while((c = getch()) != '\r'){
+        if(c == '\b'){
+            if(idx != 0){
+                cout << '\b';
+                idx--;
+                continue;
+            }
+            else{
+                continue;
+            }
+        }
         FirstInput[idx++] = c;
         cout << '*';
     }
     FirstInput[idx] = '\0';
     idx = 0;
+    getchar();
     cout << endl << endl << "                     ";
     cout << "   请输入新密码：";
     while((c = getch()) != '\r'){
+        if(c == '\b'){
+            if(idx != 0){
+                cout << '\b';
+                idx--;
+                continue;
+            }
+            else{
+                continue;
+            }
+        }
         SecondInput[idx++] = c;
         cout << '*';
     }
     SecondInput[idx] = '\0';
     cout << endl;
+    if(Len_Str(SecondInput)<6){
+        cout << endl << endl << "                  ";
+        cout << "密码修改失败，密码长度应大于6位";
+        cout << endl << endl << "                         ";
+        cout << "1秒后返回我的界面";
+        Delay(10000);
+        return 1;
+    }
     if(Equal_Str(FirstInput,UserItem.Password)){
         Assign_Char(Password,SecondInput);
         ModifyUserPassword(UserItems,UserItem.Account,Password);
         cout << endl << endl << "                  ";
-        cout << "密码修改成功，1秒后返回我的界面：";
+        cout << "密码修改成功，1秒后返回我的界面";
         Delay(1000);
         return 1;
     }
@@ -1957,10 +1998,13 @@ int main()
                     //我的竞拍
                     PrintMyAuctions(Items,UserItem);
                     Flag = 0;
+
                     goto MyPage;
                     break;
             case '3':
                     //退出登录
+                    CreateUserList(UserItems);//初始化用户链表
+                    CreateAuctionList(Items);//初始化物品链表
                     cout << "                     ";
                     cout << "  退出登录中，请等候..." << endl ;
                     Delay(1000);
