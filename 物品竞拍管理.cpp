@@ -67,6 +67,8 @@ char Light[5] = "明拍";
 char Manager[5] = "root";
 char Not[3] = "无";
 char Auctioneer[13] = "拍卖行管理员";
+char Help[30] = "              H.帮助";
+char EMPTY[2] = " ";
 /****************************全局变量区*******************************/
 
 
@@ -243,7 +245,7 @@ void AddAuctionItemPage(auctionItems &Items,auctionItem &Item);
 
 /*****************************UI声明区********************************/
 /*打印页面头*/
-void Page_Head(char *Title);
+void Page_Head(char *Title,char *Help);
 
 /*首页打印*/
 void PrintHomePage();
@@ -271,6 +273,9 @@ void PrintMyPage();
 
 /*打印我的竞拍页面*/
 void PrintMyAuctions(auctionItems Items,User UserItem);
+
+/*帮助页面*/
+void PrintHelpPage();
 
 /*字体、背景初始化*/
 void InitBackgroundAndFont();
@@ -610,7 +615,7 @@ int DeleteItemPage(auctionItems &Items,User UserItem){
     auctionItem Item;
     char TITLE[20] = "删除物品信息界面";
     char selection;
-    Page_Head(TITLE);
+    Page_Head(TITLE,EMPTY);
     cout << endl << "                     " << "请输入要删除物品的编号:" ;
     do{
         if(!Flag){
@@ -659,7 +664,7 @@ int ModifyItem(auctionItems &Items,long Id,auctionItem &PreItem,auctionItem &Pos
 /*修改物品信息页面*/
 int ModifyItemAndPage(auctionItems &Items,User UserItem){
     char TITLE[20] = "修改物品信息界面";
-    Page_Head(TITLE);
+    Page_Head(TITLE,EMPTY);
     auctionItem PostItem,PreItem;
     int Flag = 1;
     char selection;
@@ -919,7 +924,7 @@ int StartAuctionPage(auctionItems &Items,User UserItem){
     auctionItem Item;
     char TITLE[20] = "   开始竞拍界面";
     char selection;
-    Page_Head(TITLE);
+    Page_Head(TITLE,EMPTY);
     cout << endl << "                     " << "请输入要竞拍物品的编号:" ;
     do{
         if(!Flag){
@@ -1003,13 +1008,18 @@ int UserBid(auctionItems &Items,auctionItem &Item,User UserItem){
 int SearchPage(auctionItems &Items,auctionItem &Item,User UserItem){
     PrintIndex_SearchPage();
     char Selection;
-    Selection = getch();
     char TITLE[20] = "    物品搜索";
-    int Id;
+    int Id,Flag = 0;
     char Name[30],Category[20];
-    switch(Selection){
+    do{
+        if(Flag == 1){
+            cout << "                     ";
+            cout << "     请选择正确操作" << endl;
+        }
+        Selection = getch();
+        switch(Selection){
         case '1':
-                Page_Head(TITLE);
+                Page_Head(TITLE,EMPTY);
                 cout << "                     ";
                 cout << "   请输入物品编号：";
                 scanf("%ld",&Id);
@@ -1041,9 +1051,10 @@ int SearchPage(auctionItems &Items,auctionItem &Item,User UserItem){
                     Delay(1000);
                     return 1;
                 }
+                Flag = 0;
                 break;
         case '2':
-                Page_Head(TITLE);
+                Page_Head(TITLE,EMPTY);
                 cout << "                     ";
                 cout << "   请输入物品类别：";
                 scanf("%s",Category);
@@ -1078,9 +1089,10 @@ int SearchPage(auctionItems &Items,auctionItem &Item,User UserItem){
                     Delay(1000);
                     return 1;
                 }
+                Flag = 0;
                 break;
         case '3':
-                Page_Head(TITLE);
+                Page_Head(TITLE,EMPTY);
                 cout << "                     ";
                 cout << "   请输入物品名称：";
                 scanf("%s",Name);
@@ -1112,11 +1124,23 @@ int SearchPage(auctionItems &Items,auctionItem &Item,User UserItem){
                     Delay(1000);
                     return 1;
                 }
+                Flag = 0;
                 break;
         case '4':
                 return 1;
                 break;
-    }
+        case 'h':
+                PrintHelpPage();
+                Flag = 2;
+                break;
+        case 'H':
+                PrintHelpPage();
+                Flag = 2;
+                break;
+        default:
+                Flag = 1;
+        }
+    }while(Flag);
 }
 
 /*物品清单页面*/
@@ -1227,7 +1251,7 @@ int BigDataPage(auctionItems Items,Users UserItems,auctionItem Item){
 /*录入物品信息页面*/
 void AddAuctionItemPage(auctionItems &Items,auctionItem &Item){
     char TITLE[20] = "录入物品信息界面";
-    Page_Head(TITLE);
+    Page_Head(TITLE,EMPTY);
     AddAuctionItem(Items,Item);//添加物品
     AddAuctionItemToFile(Item);//添加物品到文件
     CreateAuctionList(Items);//初始化物品链表
@@ -1504,7 +1528,7 @@ int ModifyUserPassword(Users &UserItems,char *Account,char *Password){
 int ModifyPasswordPage(Users &UserItems,User &UserItem){
     char TITLE[20] = "    修改密码";
     char Password[20];
-    Page_Head(TITLE);
+    Page_Head(TITLE,EMPTY);
     int idx = 0;
     char c,FirstInput[20],SecondInput[20];
     cout << "                     ";
@@ -1549,14 +1573,14 @@ int ModifyPasswordPage(Users &UserItems,User &UserItem){
         cout << "密码修改失败，密码长度应大于6位";
         cout << endl << endl << "                         ";
         cout << "1秒后返回我的界面";
-        Delay(10000);
-        return 1;
+        Delay(1000);
+        return 0;
     }
     if(Equal_Str(FirstInput,UserItem.Password)){
         Assign_Char(Password,SecondInput);
         ModifyUserPassword(UserItems,UserItem.Account,Password);
         cout << endl << endl << "                  ";
-        cout << "密码修改成功，1秒后返回我的界面";
+        cout << "密码修改成功，1秒后返回登录界面";
         Delay(1000);
         return 1;
     }
@@ -1564,7 +1588,7 @@ int ModifyPasswordPage(Users &UserItems,User &UserItem){
         cout << "                     ";
         cout << "原密码输入错误，1秒后返回我的界面：";
         Delay(1000);
-        return 1;
+        return 0;
     }
 }
 
@@ -1574,10 +1598,10 @@ int ModifyPasswordPage(Users &UserItems,User &UserItem){
 
 /*******************************UI操作区************************************/
 /*打印页面头*/
-void Page_Head(char *Title){
+void Page_Head(char *Title,char *Help){
     ClearScreen();
     cout << endl << "                     ";
-    cout << "Auction management system" << endl;
+    cout << "Auction management system" << Help << endl;
     cout << "                         ";
     cout << Title << endl;
     cout << "____________________________________________________________________" << endl << endl << endl<< endl;
@@ -1586,7 +1610,7 @@ void Page_Head(char *Title){
 /*首页打印*/
 void PrintHomePage(){
     char TITLE[20] = "物品竞拍管理系统";
-    Page_Head(TITLE);
+    Page_Head(TITLE,Help);
     cout << "                     ";
     cout << "-------------------------" << endl;
     cout << "                     ";
@@ -1619,19 +1643,19 @@ void PrintHomePage(){
 /*首页登录框*/
 void LogPrintHomePage(){
     char TITLE[20] = "    登陆界面";
-    Page_Head(TITLE);
+    Page_Head(TITLE,EMPTY);
 }
 
 /*新用户注册页面*/
 void RegisterPage(){
     char TITLE[20] = "    注册页面";
-    Page_Head(TITLE);
+    Page_Head(TITLE,EMPTY);
 }
 
 /*主页*/
 void PrintIndexPage(){
     char TITLE[20] = "      主页";
-    Page_Head(TITLE);
+    Page_Head(TITLE,Help);
     cout << "                     ";
     cout << "-------------------------" << endl;
     cout << "                     ";
@@ -1674,7 +1698,7 @@ void PrintIndexPage(){
 /*打印物品搜索页*/
 void PrintIndex_SearchPage(){
     char TITLE[20] = "    物品搜索";
-    Page_Head(TITLE);
+    Page_Head(TITLE,Help);
     cout << "                     ";
     cout << "-------------------------" << endl;
     cout << "                     ";
@@ -1713,19 +1737,19 @@ void PrintIndex_SearchPage(){
 /*打印物品清单页面*/
 void PrintIndex_ItemsPage(){
     char TITLE[20] = "    物品清单";
-    Page_Head(TITLE);
+    Page_Head(TITLE,EMPTY);
 }
 
 /*打印拍卖行大数据页面*/
 void PrintIndex_BigDataPage(){
     char TITLE[20] = "   拍卖行大数据";
-    Page_Head(TITLE);
+    Page_Head(TITLE,EMPTY);
 }
 
 /*打印我的页面*/
 void PrintMyPage(){
     char TITLE[20] = "     我的页面";
-    Page_Head(TITLE);
+    Page_Head(TITLE,Help);
     cout << "                     ";
     cout << "-------------------------" << endl;
     cout << "                     ";
@@ -1764,7 +1788,7 @@ void PrintMyPage(){
 /*打印我的竞拍页面*/
 void PrintMyAuctions(auctionItems Items,User UserItem){
     char TITLE[20] = "     我的竞拍";
-    Page_Head(TITLE);
+    Page_Head(TITLE,EMPTY);
     if(!SearchByTheHighestBidder(Items,UserItem.Nickname,UserItem)){
         cout << endl << "                     ";
         cout << "---您暂时还没有竞拍物品---"<< endl ;
@@ -1777,7 +1801,7 @@ void PrintMyAuctions(auctionItems Items,User UserItem){
 /*打印管理员页面*/
 void PrintManagerPage(){
     char TITLE[20] = "   管理员页面";
-    Page_Head(TITLE);
+    Page_Head(TITLE,Help);
     cout << "                     ";
     cout << "-------------------------" << endl;
     cout << "                     ";
@@ -1815,6 +1839,29 @@ void PrintManagerPage(){
     cout << "____________________________________________________________________" << endl ;
     cout << "                     ";
     cout << "    2018.5.3 By XHSF      " << endl << endl << endl<< endl;
+}
+
+/*帮助页面*/
+void PrintHelpPage(){
+    ClearScreen();
+    cout << endl << "                     ";
+    cout << "Auction management system              " << endl;
+    cout << "                         ";
+    cout << "     帮助页面" << endl;
+    cout << "____________________________________________________________________" << endl << endl << endl<< endl;
+    cout << "           ";
+    cout << "1.这是一个提供用户进行物品竞拍的系统，用户可在"<< endl << "             " << "此系统上对物品进行出价，价高者得。";
+    cout << endl << endl << "           ";
+    cout << "2.竞拍方式有明拍和暗拍两种。在暗拍方式下，用用"<< endl << "             " << "户无法看到物品当前的最高价。";
+    cout << endl << endl << "           ";
+    cout << "3.当前拍卖行仅支持2亿元以下的交易。";
+    cout << endl << endl << "           ";
+    cout << "4.此系统可以全程使用键盘进行操作，无需鼠标。";
+    cout << endl << endl << "           ";
+    cout << "5.用户密码长度应该大于等于6位。";
+    cout << endl << endl << endl << "                         ";
+    cout << "按任意键返回上一页";
+    getch();
 }
 
 /*字体、背景初始化*/
@@ -1871,6 +1918,16 @@ int main()
                     Flag = 0;
                     goto IndexPage;
                     break;
+            case 'h':
+                    PrintHelpPage();
+                    Flag = 0;
+                    goto LogPage;
+                    break;
+            case 'H':
+                    PrintHelpPage();
+                    Flag = 0;
+                    goto LogPage;
+                    break;
             default:
                     //错误，重新选择
                     Flag = 1;
@@ -1920,6 +1977,16 @@ int main()
                     //跳转到我的页面
                     Flag = 0;
                     goto MyPage;
+                    break;
+            case 'h':
+                    PrintHelpPage();
+                    Flag = 0;
+                    goto IndexPage;
+                    break;
+            case 'H':
+                    PrintHelpPage();
+                    Flag = 0;
+                    goto IndexPage;
                     break;
             default:
                     //错误，重新选择
@@ -1971,6 +2038,16 @@ int main()
                     Flag = 0;
                     goto IndexPage;
                     break;
+            case 'h':
+                    PrintHelpPage();
+                    Flag = 0;
+                    goto ManagerPage;
+                    break;
+            case 'H':
+                    PrintHelpPage();
+                    Flag = 0;
+                    goto ManagerPage;
+                    break;
             default:
                     //错误，重新选择
                     Flag = 1;
@@ -1990,15 +2067,20 @@ int main()
         switch(selection){
             case '1':
                     //修改密码
-                    ModifyPasswordPage(UserItems,UserItem);
-                    Flag = 0;
-                    goto MyPage;
+                    if(ModifyPasswordPage(UserItems,UserItem)){//成功
+                        Flag = 0;
+                        CreateUserList(UserItems);//初始化用户链表
+                        CreateAuctionList(Items);//初始化物品链表
+                        goto LogPage;
+                    }else{//失败
+                        Flag = 0;
+                        goto MyPage;
+                    }
                     break;
             case '2':
                     //我的竞拍
                     PrintMyAuctions(Items,UserItem);
                     Flag = 0;
-
                     goto MyPage;
                     break;
             case '3':
@@ -2015,6 +2097,16 @@ int main()
                     //跳转到主页
                     goto IndexPage;
                     Flag = 0;
+                    break;
+            case 'h':
+                    PrintHelpPage();
+                    Flag = 0;
+                    goto MyPage;
+                    break;
+            case 'H':
+                    PrintHelpPage();
+                    Flag = 0;
+                    goto MyPage;
                     break;
             default:
                     //错误，重新选择
