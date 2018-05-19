@@ -112,7 +112,7 @@ int AuctionItemQuantity(auctionItems Items);
 void AddAuctionItemToFile();
 
 /*添加物品信息*/
-void AddAuctionItem(auctionItems &Items,auctionItem &Item);
+void AddAuctionItem(auctionItems &Items,auctionItem &Item,User UserItem);
 
 /*初始化拍卖品链表*/
 void CreateAuctionList(auctionItems &Items);
@@ -406,7 +406,7 @@ void AddAuctionItemToFile(auctionItem &Item){
 }
 
 /*添加物品信息*/
-void AddAuctionItem(auctionItems &Items,auctionItem &Item){
+void AddAuctionItem(auctionItems &Items,auctionItem &Item,User UserItem){
     int Flag = 0;
     char selection;
     char Bright[5] = "明拍",Dark[5] = "暗拍";
@@ -467,21 +467,21 @@ void AddAuctionItem(auctionItems &Items,auctionItem &Item){
     Input_Str(Item.Description,a7);
     cout << endl << "                     ";
     Assign_Char(Item.State,Auctioning);
-    Assign_Char(Item.Owner,Auctioneer);
+    Assign_Char(Item.Owner,UserItem.Nickname);
 }
 
 /*初始化拍卖品链表*/
 void CreateAuctionList(auctionItems &Items){
     FILE *fp;
     fp = fopen("auctionItems_DataBase.txt","rb");
-    auctionItems Pointer,PointerBridge ;//head指针为链表的头结点，是找到链表的唯一依据，如果head指针丢失，那么整个链表就找不到了;p指针总是指向新申请的结点;q指针总是指向尾节点
+    auctionItems Pointer,PointerBridge;
     auctionItem temp;//定义结构体别名
     Items = (auctionItems)malloc(sizeof(auctionItem));
     Items->next = NULL;
-    Pointer = (auctionItems)malloc(sizeof(auctionItem));  // p指向新开辟的节点内存
-    Pointer = Items;    //开辟头结点内存      头结点中没有学生成绩信息
+    Pointer = (auctionItems)malloc(sizeof(auctionItem));
+    Pointer = Items;
     while(fread(&temp,sizeof(auctionItem),1,fp)!=0){//从文件中读结构体块
-        PointerBridge = (auctionItems)malloc(sizeof(auctionItem)); // p指向新开辟的节点内存
+        PointerBridge = (auctionItems)malloc(sizeof(auctionItem));
         Assign_Int(PointerBridge -> Id,temp.Id);
         Assign_Char(PointerBridge -> Category,temp.Category);
         Assign_Char(PointerBridge -> Name,temp.Name);
@@ -622,7 +622,7 @@ int DeleteItemPage(auctionItems &Items,User UserItem){
             cout << endl << "                     " << "请输入正确的物品编号:" ;
         }
         scanf("%ld",&Id);
-        if(SearchById(Items,Id,Item)){
+        if(SearchById(Items,Id,Item)&&Equal_Str(Item.Owner,UserItem.Nickname)){
             PrintAuctionItem(Item,UserItem);
             cout << endl << "                     " << "1：确认删除 2：放弃删除" ;
             do{
@@ -678,6 +678,7 @@ int ModifyItemAndPage(auctionItems &Items,User UserItem){
         }
         Input_Int(PostItem.Id,a1);
         Flag = SearchById(Items,PostItem.Id,PostItem);
+        Flag = Equal_Str(PostItem.Owner,UserItem.Nickname);
     }while(Flag == 0);
     cout << endl << "                     " << "         修改前" << endl;
     PrintAuctionItem(PostItem,UserItem);
@@ -932,9 +933,15 @@ int StartAuctionPage(auctionItems &Items,User UserItem){
         }
         scanf("%ld",&Id);
         if(SearchById(Items,Id,Item)){
+            if(!Equal_Str(Item.Owner,UserItem.Nickname)){
+                cout << "               ";
+                cout <<"您不是该物品的卖家，1秒后返回上一页";
+                Delay(1000);
+                return 1;
+            }
             PrintAuctionItem(Item,UserItem);
             if(Equal_Str(Item.State,Traded)){
-                cout << endl << endl << "             " << "竞拍失败，物品已交易，1秒后放回上一页" ;
+                cout << endl << endl << "             " << "竞拍失败，物品已交易，1秒后返回上一页" ;
                 Delay(1000);
                 return 1;
             }
@@ -1024,6 +1031,12 @@ int SearchPage(auctionItems &Items,auctionItem &Item,User UserItem){
                 cout << "   请输入物品编号：";
                 scanf("%ld",&Id);
                 if(SearchById(Items,Id,Item)){
+                    if(Equal_Str(Item.Owner,UserItem.Nickname)){
+                        cout << "                 ";
+                        cout <<"无法竞拍自己的物品，1秒后返回主页";
+                        Delay(1000);
+                        return 1;
+                    }
                     PrintAuctionItem(Item,UserItem);
                     cout << "                     ";
                     cout <<"按1进行竞拍，按2返回主页";
@@ -1068,6 +1081,12 @@ int SearchPage(auctionItems &Items,auctionItem &Item,User UserItem){
                                 cout << "   请输入物品编号：";
                                 scanf("%ld",&Id);
                                 SearchById(Items,Id,Item);
+                                if(Equal_Str(Item.Owner,UserItem.Nickname)){
+                                    cout << "                 ";
+                                    cout <<"无法竞拍自己的物品，1秒后返回主页";
+                                    Delay(1000);
+                                    return 1;
+                                }
                                 if(UserBid(Items,Item,UserItem)){
                                     cout << "                     ";
                                     cout <<"竞拍成功，1秒后返回主页";
@@ -1097,6 +1116,12 @@ int SearchPage(auctionItems &Items,auctionItem &Item,User UserItem){
                 cout << "   请输入物品名称：";
                 scanf("%s",Name);
                 if(SearchByName(Items,Name,Item)){
+                    if(Equal_Str(Item.Owner,UserItem.Nickname)){
+                        cout << "                 ";
+                        cout <<"无法竞拍自己的物品，1秒后返回主页";
+                        Delay(1000);
+                        return 1;
+                    }
                     PrintAuctionItem(Item,UserItem);
                     cout << "                     ";
                     cout <<"按1进行竞拍，按2返回主页";
@@ -1162,6 +1187,12 @@ int ItemsPage(auctionItems &Items,auctionItem &Item,User UserItem){
                 cout << "   请输入物品编号：";
                 scanf("%ld",&Id);
                 if(SearchById(Items,Id,Item)){
+                    if(Equal_Str(Item.Owner,UserItem.Nickname)){
+                        cout << "                 ";
+                        cout <<"无法竞拍自己的物品，1秒后返回主页";
+                        Delay(1000);
+                        return 1;
+                    }
                     if(UserBid(Items,Item,UserItem)){
                         cout << "                     ";
                         cout <<"竞拍成功，1秒后返回主页";
@@ -1249,10 +1280,10 @@ int BigDataPage(auctionItems Items,Users UserItems,auctionItem Item){
 }
 
 /*录入物品信息页面*/
-void AddAuctionItemPage(auctionItems &Items,auctionItem &Item){
+void AddAuctionItemPage(auctionItems &Items,auctionItem &Item,User UserItem){
     char TITLE[20] = "录入物品信息界面";
     Page_Head(TITLE,EMPTY);
-    AddAuctionItem(Items,Item);//添加物品
+    AddAuctionItem(Items,Item,UserItem);//添加物品
     AddAuctionItemToFile(Item);//添加物品到文件
     CreateAuctionList(Items);//初始化物品链表
     cout << "                     ";
@@ -1390,14 +1421,14 @@ int DeleteUserAndCreateList(Users &UserItems,char *UserAccount,User &UserItem){
 void CreateUserList(Users &UserItems){
     FILE *fp;
     fp = fopen("Users_DataBase.txt","rb");
-    Users Pointer,PointerBridge ;//head指针为链表的头结点，是找到链表的唯一依据，如果head指针丢失，那么整个链表就找不到了;p指针总是指向新申请的结点;q指针总是指向尾节点
+    Users Pointer,PointerBridge ;
     User temp;//定义结构体别名
     UserItems = (Users)malloc(sizeof(User));
     UserItems->next = NULL;
-    Pointer = (Users)malloc(sizeof(User));  // p指向新开辟的节点内存
-    Pointer = UserItems;    //开辟头结点内存      头结点中没有学生成绩信息
+    Pointer = (Users)malloc(sizeof(User));  // Pointer指向新开辟的节点内存
+    Pointer = UserItems;
     while(fread(&temp,sizeof(User),1,fp)!=0){//从文件中读结构体块
-        PointerBridge = (Users)malloc(sizeof(User)); // p指向新开辟的节点内存
+        PointerBridge = (Users)malloc(sizeof(User));
         Assign_Char(PointerBridge -> Account,temp.Account);
         Assign_Char(PointerBridge -> Nickname,temp.Nickname);
         Assign_Char(PointerBridge -> Password,temp.Password);
@@ -1943,11 +1974,6 @@ int main()
             cout << " 选择错误，请重新选择操作" << endl ;
             Flag = 0;
         }
-        if(Flag == 2){
-            cout << "                     ";
-            cout << "    非管理员无法进入     " << endl ;
-            Flag = 0;
-        }
         selection = getch();
         switch(selection){
             case '1':
@@ -1996,11 +2022,6 @@ int main()
     /***************主页***************/
     /***************管理员页面***************/
     ManagerPage:
-        //判断是不是管理员
-        if(!Equal_Str(UserItem.Account,Manager)){
-            Flag = 2;
-            goto IndexPage;
-        }
         PrintManagerPage();
         if(Flag == 1){
             cout << "                     ";
@@ -2011,7 +2032,7 @@ int main()
         switch(selection){
             case '1':
                     //增加物品
-                    AddAuctionItemPage(Items,Item);
+                    AddAuctionItemPage(Items,Item,UserItem);
                     Flag = 0;
                     goto ManagerPage;
                     break;
