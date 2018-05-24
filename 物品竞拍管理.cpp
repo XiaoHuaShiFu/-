@@ -2,10 +2,13 @@
 #include <iostream>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <malloc.h>
 #include <sstream>
 #include <conio.h>
 #include <windows.h> //Sleep()函数,字体颜色
+#include <time.h>
+#include <ctime>
 using namespace std;
 /****************************头文件区*********************************/
 
@@ -28,6 +31,7 @@ typedef struct auctionItem{
     char Description[101];//物品描述
     char State[10];//物品状态 竞拍中，已成交
     char Owner[30];//物主
+    long long EndTime;//结束时间
     struct auctionItem *next;
 } auctionItem,*auctionItems;
 typedef struct User{
@@ -55,6 +59,7 @@ char a10[30] = "请输入物品起拍价:";
 char a11[30] = "1:明拍      2:暗拍";
 char a12[30] = "请输入物品最高出价者:";
 char a13[30] = "请输入物品当前最高价格:";
+char a14[30] = "请输入物品竞拍时长(单位小时):";
 char b1[30] = "请输入账号:";
 char b2[30] = "请输入昵称:";
 char b3[30] = "请输入密码:";
@@ -69,6 +74,8 @@ char Not[3] = "无";
 char Auctioneer[13] = "拍卖行管理员";
 char Help[30] = "              H.帮助";
 char EMPTY[2] = " ";
+char dash[2] = "-";
+char colon[2] = ":";
 /****************************全局变量区*******************************/
 
 
@@ -82,6 +89,18 @@ int Len_Str(char str[]);
 
 /*延时函数，参数单位为毫秒*/
 void Delay(int seconds);
+
+/*生成时间类型字符串*/
+void CreateTime(long long seconds,char *Time);
+
+/*获取当前月份的天数*/
+int GetDay(int month);
+
+/*获取当前时间*/
+long long GetTheCurrentTime();
+
+/*获取当前月份*/
+int GetMonth(long Seconds);
 
 /*输出提示并输入整形数据*/
 void Input_Int(long &Int,char prompt[]);
@@ -169,7 +188,10 @@ long TurnoverInAuctionHouse(auctionItems Items);
 int TurnoverNumberInAuctionHouse(auctionItems Items,char State[]);
 
 /*开始拍卖，成功返回1，失败返回0*/
-int  StartAuction(auctionItem &Item);
+int StartAuction(auctionItem &Item);
+
+/*检查是否可以进行拍卖，如果可以则进行拍卖*/
+void CheckAuction(auctionItems &Items,auctionItem &Item);
 
 /*开始竞拍页面*/
 int StartAuctionPage(auctionItems &Items,User UserItem);
@@ -300,6 +322,99 @@ void Delay(int seconds){
     Sleep(seconds);
 }
 
+/*获取当前月份的天数*/
+int GetDay(int month){
+    switch(month){
+        case 1:return 0;
+        case 2:return 31;
+        case 3:return 59;
+        case 4:return 90;
+        case 5:return 120;
+        case 6:return 151;
+        case 7:return 181;
+        case 8:return 212;
+        case 9:return 243;
+        case 10:return 273;
+        case 11:return 304;
+        case 12:return 334;
+        default:return -1;
+    }
+}
+
+/*获取当前时间*/
+long long GetTheCurrentTime(){
+    char CurrentTime[20];
+    time_t Time = time(0);
+    strftime(CurrentTime, sizeof(CurrentTime),"%Y-%m-%d %X",localtime(&Time));
+    int year,month,day,hour,min,sec;
+    sscanf(CurrentTime,"%d-%d-%d %d:%d:%d",&year,&month,&day,&hour,&min,&sec);
+    long long seconds = (long long )year*31536000 +
+                        (long long )(GetDay(month)+day)*86400 + (long long )hour * 3600 + (long long )min * 60 + (long long )sec;
+    return seconds;
+}
+
+/*获取当前月份*/
+int GetMonth(long Seconds){
+    if(Seconds > 334*86400){
+        return 12;
+    }else if(Seconds > 304*86400){
+        return 11;
+    }else if(Seconds > 273*86400){
+        return 10;
+    }else if(Seconds > 243*86400){
+        return 9;
+    }else if(Seconds > 212*86400){
+        return 8;
+    }else if(Seconds > 181*86400){
+        return 7;
+    }else if(Seconds > 151*86400){
+        return 6;
+    }else if(Seconds > 120*86400){
+        return 5;
+    }else if(Seconds > 90*86400){
+        return 4;
+    }else if(Seconds > 59*86400){
+        return 3;
+    }else if(Seconds > 31*86400){
+        return 2;
+    }else return 1;
+}
+
+/*生成时间类型字符串*/
+void CreateTime(long long seconds,char *Time){
+    int year = seconds / 31536000;
+    long month_seconds = seconds % 31536000;
+    int month = GetMonth(month_seconds);
+    int day_seconds = month_seconds - GetDay(month)*86400;
+    int day = day_seconds / 86400;
+    int hour_seconds = day_seconds - day * 86400;
+    int hour = hour_seconds / 3600;
+    int min_seconds = hour_seconds - hour * 3600;
+    int min = min_seconds / 60;
+    int sec = min_seconds - min * 60;
+    char time[20] = "";
+    char Year[5],Month[3],Day[3],Hour[3],Min[3],Sec[3];
+    itoa(year,Year,10);
+    itoa(month,Month,10);
+    itoa(day,Day,10);
+    itoa(hour,Hour,10);
+    itoa(min,Min,10);
+    itoa(sec,Sec,10);
+    strcat(time,Year);
+    strcat(time,dash);
+    strcat(time,Month);
+    strcat(time,dash);
+    strcat(time,Day);
+    strcat(time,EMPTY);
+    strcat(time,Hour);
+    strcat(time,colon);
+    strcat(time,Min);
+    strcat(time,colon);
+    strcat(time,Sec);
+    strcpy(Time,time);
+
+}
+
 /*输出提示并输入整形数据*/
 void Input_Int(long &Int,char prompt[]){
     if(Equal_Str(prompt,Empty)){
@@ -409,6 +524,7 @@ void AddAuctionItemToFile(auctionItem &Item){
 void AddAuctionItem(auctionItems &Items,auctionItem &Item,User UserItem){
     int Flag = 0;
     char selection;
+    long long hour;
     char Bright[5] = "明拍",Dark[5] = "暗拍";
     char New[3] = "新",Old[3] = "旧";
     cout << "                     ";
@@ -468,6 +584,9 @@ void AddAuctionItem(auctionItems &Items,auctionItem &Item,User UserItem){
     cout << endl << "                     ";
     Assign_Char(Item.State,Auctioning);
     Assign_Char(Item.Owner,UserItem.Nickname);
+    cout << a14;
+    scanf("%lld",&hour);
+    Item.EndTime = (long long)hour*3600 + GetTheCurrentTime();
 }
 
 /*初始化拍卖品链表*/
@@ -494,6 +613,7 @@ void CreateAuctionList(auctionItems &Items){
         Assign_Char(PointerBridge -> Description,temp.Description);
         Assign_Char(PointerBridge -> State,temp.State);
         Assign_Char(PointerBridge -> Owner,temp.Owner);
+        PointerBridge -> EndTime = temp.EndTime;
         PointerBridge->next = Pointer -> next;
         Pointer->next = PointerBridge;
         Pointer = PointerBridge;
@@ -503,6 +623,8 @@ void CreateAuctionList(auctionItems &Items){
 
 /*打印拍卖品，返回1*/
 int PrintAuctionItem(auctionItem Item,User UserItem){
+    char Time[64];
+    CreateTime(Item.EndTime,Time);
     cout << "                     ";
     cout << "-------------------------" << endl;
     cout << "                     ";
@@ -533,6 +655,8 @@ int PrintAuctionItem(auctionItem Item,User UserItem){
     cout << " 状态：" << Item.State << endl ;
     cout << "                     ";
     cout << " 拥有者：" << Item.Owner << endl ;
+    cout << "                     ";
+    cout << " 拍卖结束时间：" << Time << endl ;
     cout << "                     ";
     cout << "---From Auction By XHSF--" << endl ;
     cout << "                     ";
@@ -901,7 +1025,7 @@ int TurnoverNumberInAuctionHouse(auctionItems Items,char State[]){
 }
 
 /*开始拍卖，成功返回1，失败返回0*/
-int  StartAuction(auctionItems &Items,auctionItem &Item){
+int StartAuction(auctionItems &Items,auctionItem &Item){
     if(Item.TheHighestPrice >= Item.StartingPrice){
         DeleteItem(Items,Item.Id,Item);
         Assign_Char(Item.Owner,Item.TheHighestBidder);
@@ -915,6 +1039,19 @@ int  StartAuction(auctionItems &Items,auctionItem &Item){
     }
     else{
         return 0;//拍卖失败
+    }
+}
+
+/*检查是否可以进行拍卖，如果可以则进行拍卖*/
+void CheckAuction(auctionItems &Items,auctionItem &Item){
+    long long CurrentTime = GetTheCurrentTime();
+    auctionItems TemporaryItems = Items;
+    while(TemporaryItems -> next != NULL){
+        TemporaryItems = TemporaryItems -> next;
+        if(TemporaryItems -> EndTime >= CurrentTime){
+            Item = *TemporaryItems;
+            StartAuction(Items,Item);
+        }
     }
 }
 
@@ -1712,7 +1849,7 @@ void PrintIndexPage(){
     cout << "                     ";
     cout << "|" << "                       " << "|" << endl ;
     cout << "                     ";
-    cout << "|" << "   4.进入管理员页面    " << "|" << endl ;
+    cout << "|" << "    4.进入管理页面     " << "|" << endl ;
     cout << "                     ";
     cout << "|" << "                       " << "|" << endl ;
     cout << "                     ";
@@ -1831,14 +1968,14 @@ void PrintMyAuctions(auctionItems Items,User UserItem){
 
 /*打印管理员页面*/
 void PrintManagerPage(){
-    char TITLE[20] = "   管理员页面";
+    char TITLE[20] = "    管理页面";
     Page_Head(TITLE,Help);
     cout << "                     ";
     cout << "-------------------------" << endl;
     cout << "                     ";
     cout << "|" << "                       " << "|" << endl ;
     cout << "                     ";
-    cout << "|" << " Welcome to 管理员页面 " << "|" << endl ;
+    cout << "|" << "  Welcome to 管理页面  " << "|" << endl ;
     cout << "                     ";
     cout << "|" << "                       " << "|" << endl ;
     cout << "                     ";
@@ -1855,14 +1992,14 @@ void PrintManagerPage(){
     cout << "|" << "                       " << "|" << endl ;
     cout << "                     ";
     cout << "|" << "      3.删除物品       " << "|" << endl ;
+//    cout << "                     ";
+//    cout << "|" << "                       " << "|" << endl ;
+//    cout << "                     ";
+//    cout << "|" << "      4.开始竞拍       " << "|" << endl ;
     cout << "                     ";
     cout << "|" << "                       " << "|" << endl ;
     cout << "                     ";
-    cout << "|" << "      4.开始竞拍       " << "|" << endl ;
-    cout << "                     ";
-    cout << "|" << "                       " << "|" << endl ;
-    cout << "                     ";
-    cout << "|" << "      5.返回主页       " << "|" << endl ;
+    cout << "|" << "      4.返回主页       " << "|" << endl ;
     cout << "                     ";
     cout << "|" << "                       " << "|" << endl ;
     cout << "                     ";
@@ -1890,6 +2027,8 @@ void PrintHelpPage(){
     cout << "4.此系统可以全程使用键盘进行操作，无需鼠标。";
     cout << endl << endl << "           ";
     cout << "5.用户密码长度应该大于等于6位。";
+    cout << endl << endl << "           ";
+    cout << "6.系统自动检测拍卖结束时间，时间到自动确认得主。";
     cout << endl << endl << endl << "                         ";
     cout << "按任意键返回上一页";
     getch();
@@ -1921,7 +2060,11 @@ int main()
     InitBackgroundAndFont();//初始化字体和背景
     CreateUserList(UserItems);//初始化用户链表
     CreateAuctionList(Items);//初始化物品链表
+    CheckAuction(Items,Item);//检查是否可以进行拍卖，如果可以则进行拍卖
     /********************************初始化区*************************************/
+
+
+
 
 
     /*******************************页面操作区************************************/
@@ -2020,7 +2163,7 @@ int main()
                     goto IndexPage;
         }
     /***************主页***************/
-    /***************管理员页面***************/
+    /***************管理页面***************/
     ManagerPage:
         PrintManagerPage();
         if(Flag == 1){
@@ -2048,13 +2191,13 @@ int main()
                     Flag = 0;
                     goto ManagerPage;
                     break;
+//            case '4':
+//                    //开始竞拍
+//                    StartAuctionPage(Items,UserItem);
+//                    Flag = 0;
+//                    goto ManagerPage;
+//                    break;
             case '4':
-                    //开始竞拍
-                    StartAuctionPage(Items,UserItem);
-                    Flag = 0;
-                    goto ManagerPage;
-                    break;
-            case '5':
                     //跳转到主页
                     Flag = 0;
                     goto IndexPage;
@@ -2075,7 +2218,7 @@ int main()
                     goto ManagerPage;
         }
 
-    /***************管理员页面***************/
+    /***************管理页面***************/
     /***************我的页面***************/
     MyPage:
         PrintMyPage();
