@@ -1057,12 +1057,19 @@ void CheckAuction(auctionItems &Items,auctionItem &Item){
 
 /*开始竞拍页面*/
 int StartAuctionPage(auctionItems &Items,User UserItem){
+    char root[5] = "root";
     long Id;
     int Flag = 1;
     auctionItem Item;
     char TITLE[20] = "   开始竞拍界面";
     char selection;
     Page_Head(TITLE,EMPTY);
+    if(!Equal_Str(UserItem.Nickname,root)){
+        cout << endl << "                     " << "非管理员无法进行竞拍" ;
+        cout << endl << endl << "                       " << "1秒后返回上一页" ;
+        Delay(1000);
+        return 1;
+    }
     cout << endl << "                     " << "请输入要竞拍物品的编号:" ;
     do{
         if(!Flag){
@@ -1376,24 +1383,24 @@ int BigDataPage(auctionItems Items,Users UserItems,auctionItem Item){
     cout << "                     ";
     cout << "当前拍卖行用户总数是： " << UserNumberInAuctionHouse(UserItems) << endl;
     cout << "                     ";
-//    cout << "-------------------------" << endl;
-//    cout << "                     ";
-//    TheHighestPriceInAuctionHouse(Items,Item);
-//    cout << "  当前最高价格的拍卖品是"  << endl;
-//    cout << "                     ";
-//    cout << "*********" << Item.Name <<"**********" << endl;
-//    cout << "                     ";
-//    cout << "*****成交价为：" << Item.TheHighestPrice << "*****"<< endl;
-//    cout << "                     ";
-//    cout << "-------------------------" << endl;
-//    cout << "                     ";
-//    TheLowestPriceInAuctionHouse(Items,Item);
-//    cout << "  当前最低价格的拍卖品是 " << endl;
-//    cout << "                     ";
-//    cout << "*********" << Item.Name <<"**********" << endl;
-//    cout << "                     ";
-//    cout << "*****成交价为：" << Item.TheHighestPrice << "*****" << endl;
-//    cout << "                     ";
+    cout << "-------------------------" << endl;
+    cout << "                     ";
+    TheHighestPriceInAuctionHouse(Items,Item);
+    cout << "  当前最高价格的拍卖品是"  << endl;
+    cout << "                     ";
+    cout << "*********" << Item.Name <<"**********" << endl;
+    cout << "                     ";
+    cout << "*****成交价为：" << Item.TheHighestPrice << "*****"<< endl;
+    cout << "                     ";
+    cout << "-------------------------" << endl;
+    cout << "                     ";
+    TheLowestPriceInAuctionHouse(Items,Item);
+    cout << "  当前最低价格的拍卖品是 " << endl;
+    cout << "                     ";
+    cout << "*********" << Item.Name <<"**********" << endl;
+    cout << "                     ";
+    cout << "*****成交价为：" << Item.TheHighestPrice << "*****" << endl;
+    cout << "                     ";
     cout << "-------------------------" << endl;
     cout << "                     ";
     cout << "当前已拍卖的物品数是：" << TurnoverNumberInAuctionHouse(Items,State1) << endl;
@@ -1992,14 +1999,14 @@ void PrintManagerPage(){
     cout << "|" << "                       " << "|" << endl ;
     cout << "                     ";
     cout << "|" << "      3.删除物品       " << "|" << endl ;
-//    cout << "                     ";
-//    cout << "|" << "                       " << "|" << endl ;
-//    cout << "                     ";
-//    cout << "|" << "      4.开始竞拍       " << "|" << endl ;
     cout << "                     ";
     cout << "|" << "                       " << "|" << endl ;
     cout << "                     ";
-    cout << "|" << "      4.返回主页       " << "|" << endl ;
+    cout << "|" << "      4.开始竞拍       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "                       " << "|" << endl ;
+    cout << "                     ";
+    cout << "|" << "      5.返回主页       " << "|" << endl ;
     cout << "                     ";
     cout << "|" << "                       " << "|" << endl ;
     cout << "                     ";
@@ -2191,13 +2198,13 @@ int main()
                     Flag = 0;
                     goto ManagerPage;
                     break;
-//            case '4':
-//                    //开始竞拍
-//                    StartAuctionPage(Items,UserItem);
-//                    Flag = 0;
-//                    goto ManagerPage;
-//                    break;
             case '4':
+                    //开始竞拍
+                    StartAuctionPage(Items,UserItem);
+                    Flag = 0;
+                    goto ManagerPage;
+                    break;
+            case '5':
                     //跳转到主页
                     Flag = 0;
                     goto IndexPage;
